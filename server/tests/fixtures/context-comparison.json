@@ -1,0 +1,13 @@
+{
+  "description": "Synthetic old request followed by a new outing conversation after an overnight gap.",
+  "history": [
+    {"role": "user", "text": "Suggest one improvement I can copy to the coding agent.", "created_at": "2026-10-17T19:00:00+00:00"},
+    {"role": "assistant", "text": "A possible improvement is more flexible memory retrieval.", "created_at": "2026-10-17T19:01:00+00:00"},
+    {"role": "user", "text": "Good morning", "created_at": "2026-10-18T11:00:00+00:00"},
+    {"role": "assistant", "text": "Good morning! What are your plans?", "created_at": "2026-10-18T11:01:00+00:00"},
+    {"role": "user", "text": "We are picking apples at the orchard today.", "created_at": "2026-10-18T11:05:00+00:00"},
+    {"role": "assistant", "text": "Sounds fun!", "created_at": "2026-10-18T11:06:00+00:00"}
+  ],
+  "query": {"text": "Going with Riley, Morgan, Casey and Jordan.", "created_at": "2026-10-18T11:17:00+00:00"},
+  "follow_up": {"text": "What are we doing today, and who is coming with us?", "created_at": "2026-10-18T11:18:00+00:00"}
+}

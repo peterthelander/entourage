@@ -3,6 +3,16 @@
 # dependencies
 node_modules/
 
+# Local inference model weights
+*.gguf
+
+# Python server environments, caches, and personal runtime data
+.venv/
+__pycache__/
+.pytest_cache/
+*.egg-info/
+/server/data/
+
 # Expo
 .expo/
 dist/
@@ -39,3 +49,10 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Local Android build output
+android-build.log
+
+# Machine-local runbooks and private experiment outputs
+/docs/local/
+/scratch/
