@@ -80,8 +80,12 @@ remain in the journals, inventory counts and date-based reading. User messages,
 assistant replies and results from other tools retain their existing search behavior.
 
 Up to five newest matching messages return dated excerpts (500 characters each),
-speaker labels, journal filenames and SQLite source references. Later corrections
-remain alongside earlier statements when both match and fit the result limit;
+speaker labels, journal filenames and SQLite source references. Every search
+result and read chunk also has a numeric `message_id`, parsed
+from source metadata rather than message text; malformed or absent IDs are null.
+Use that field with `readMemories(message_id=...)`. The original source string is
+retained. This clarifies the tool contract; models may still omit or misuse citations.
+Later corrections remain alongside earlier statements when both match and fit the result limit;
 the model must interpret them. Returned statements are evidence of what was said,
 not automatically verified facts. The prompt requests date/message-ID citations.
 Existing tool-result display and persisted turn history show the raw evidence.

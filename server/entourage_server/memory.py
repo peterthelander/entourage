@@ -54,7 +54,9 @@ def _journal_records(directory, start=None, end=None):
                 if instant.tzinfo is None:
                     truncated = True
                     continue
+                message = re.search(r"(?:^|; )message=([1-9][0-9]*);", source)
                 records.append({"file": path.name, "timestamp": timestamp, "speaker": speaker,
+                                "message_id": int(message[1]) if message else None,
                                 "source": source, "text": "\n".join(line[2:] for line in quoted.splitlines())})
                 count += 1
             zone = re.search(r"^Timezone: `([^`\n]{1,100})`$", text, re.MULTILINE)
@@ -110,7 +112,7 @@ def read_memories(directory: Path, args: dict):
         raise ValueError("Supply snapshot when continuing a page.")
     records, _, incomplete, token, status = _journal_records(directory, start, end)
     if message_id is not None:
-        records = [record for record in records if re.search(rf"(?:^|; )message={message_id};", record["source"])]
+        records = [record for record in records if record["message_id"] == message_id]
     if snapshot and snapshot != token:
         return {"status": "journal_changed", "results": [], "guidance": "Journals changed. Restart from offset 0; do not claim full coverage from mixed pages."}
     results, index, more = [], 0, False

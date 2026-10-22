@@ -35,6 +35,7 @@ class MemoryTests(unittest.TestCase):
         self.assertEqual(len(result["results"]), 2)
         self.assertIn("Maine", result["results"][0]["excerpt"])
         self.assertIn("message=2", result["results"][0]["source"])
+        self.assertEqual(result["results"][0]["message_id"], 2)
         self.assertIn("User", result["results"][0]["speaker"])
         dated = self.search(keywords=["ski"], start_date="2026-10-16", end_date="2026-10-16")
         self.assertEqual(len(dated["results"]), 1)
@@ -83,8 +84,30 @@ class MemoryTests(unittest.TestCase):
         self.assertEqual(leads["results"][0]["evidence"], "secondary_statement")
         original = read_memories(self.journals, {"message_id": 1})
         self.assertEqual(len(original["results"]), 1)
+        self.assertEqual(original["results"][0]["message_id"], 1)
         self.assertTrue(original["results"][0]["speaker"].startswith("User"))
         self.assertIn("sonnet", original["results"][0]["excerpt"])
+        self.assertEqual(read_memories(self.journals, {"message_id": 999})["results"], [])
+
+    def test_structured_source_id_is_metadata_not_uuid_fragment_or_message_text(self):
+        self.add("The quoted text says message=999; but that is not its source ID. " + "x" * 2600)
+        result = self.search(keywords=["quoted"])
+        self.assertEqual(result["results"][0]["message_id"], 1)
+        self.assertIn("message=1;", result["results"][0]["source"])
+        first = read_memories(self.journals, {"message_id": 1})
+        self.assertEqual({item["message_id"] for item in first["results"]}, {1})
+        next_page = read_memories(self.journals, {"message_id": 1, "offset": first["next_offset"],
+                                                 "snapshot": first["snapshot"]})
+        self.assertEqual({item["message_id"] for item in next_page["results"]}, {1})
+        self.assertEqual(read_memories(self.journals, {"message_id": 999})["results"], [])
+
+    def test_missing_source_id_stays_unknown_instead_of_using_numbers_in_content(self):
+        self.add("Original quoted message=999; content.")
+        self.search(keywords=["quoted"])
+        path = self.journals / "2026-10-17.md"
+        path.write_text(path.read_text(encoding="utf-8").replace("message=1;", "message=unknown;"), encoding="utf-8")
+        found = search_memories(self.journals, {"keywords": ["quoted"]})
+        self.assertIsNone(found["results"][0]["message_id"])
         self.assertEqual(read_memories(self.journals, {"message_id": 999})["results"], [])
 
     def test_search_pagination_reaches_older_originals_and_detects_changes(self):
