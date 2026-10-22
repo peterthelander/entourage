@@ -45,6 +45,22 @@ class LlamaCppTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("tool_name", messages[1])
         self.assertEqual(messages[1]["tool_call_id"], "call_1")
         self.assertNotIn("options", captured[0])
+        self.assertEqual(captured[0]["reasoning_effort"], "low")
+
+    async def test_reasoning_override_changes_wire_effort_without_changing_other_limits(self):
+        captured = []
+        def handle(request):
+            captured.append(json.loads(request.content))
+            return httpx.Response(200, text='data: {"choices":[{"delta":{"content":"Done"},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n')
+        settings = Settings()
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
+            for effort in ("medium", "high"):
+                await LlamaCpp(settings, client, reasoning_effort=effort).generate([], lambda _: None)
+            with self.assertRaises(ValueError):
+                LlamaCpp(settings, client, reasoning_effort="unlimited")
+        self.assertEqual([body["reasoning_effort"] for body in captured], ["medium", "high"])
+        self.assertTrue(all(body["max_tokens"] == settings.max_output_tokens for body in captured))
+        self.assertTrue(all(body["reasoning_format"] == "deepseek" for body in captured))
 
     async def test_incomplete_truncated_error_and_bad_tool_streams_fail(self):
         for body in [

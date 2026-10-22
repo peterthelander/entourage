@@ -27,6 +27,10 @@ configuration table and link to them rather than copying values into several gui
 
 - [Conversation evaluation suite](experiments/conversation-evaluations.md)
 - [October 21 conversation baseline and findings](experiments/2026-10-21-conversation-baseline.md)
+- [October 21 literal-search guidance trials](experiments/2026-10-21-retrieval-guidance.md)
+- [October 21 word-search interface comparison](experiments/2026-10-21-word-search.md)
+- [October 21 reasoning-effort comparison](experiments/2026-10-21-reasoning-comparison.md)
+- [October 21 explicit source-identifier experiment](experiments/2026-10-21-source-identifiers.md)
 - [Context selection experiments and runner](experiments/context-experiments.md)
 - [Web lookup and page-reading evaluations](experiments/web-lookup-evaluation.md)
 

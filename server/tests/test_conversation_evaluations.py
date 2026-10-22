@@ -1,8 +1,14 @@
 import asyncio
 import importlib.util
+import io
 import json
 from pathlib import Path
 import unittest
+from tempfile import TemporaryDirectory
+from types import SimpleNamespace
+from unittest.mock import patch
+
+import httpx
 
 from entourage_server.config import Settings
 
@@ -38,6 +44,7 @@ class ConversationEvaluationTests(unittest.TestCase):
         self.assertTrue(all(turn["mechanical_pass"] for turn in row["turns"]))
         self.assertNotIn("Birch-92", json.dumps(model.requests[0]))
         self.assertIn("Birch-92", model.requests[1][-1]["content"])
+        self.assertEqual(json.loads(model.requests[1][-1]["content"])["results"][0]["message_id"], 2)
         self.assertIn("Birch-92", json.dumps(model.requests[2]))
         self.assertEqual(row["turns"][0]["semantic_review"], "pending")
 
@@ -81,3 +88,42 @@ class ConversationEvaluationTests(unittest.TestCase):
         self.assertTrue(evaluation.assess(turn, "completed", "Birch-92 [message_id=2]", tools)["mechanical_pass"])
         self.assertFalse(evaluation.assess(turn, "completed", "Birch-92 (ID 20).", tools)["mechanical_pass"])
         self.assertFalse(evaluation.assess(turn, "failed", "Birch-92 (ID 2).", tools)["mechanical_pass"])
+
+    def test_live_runner_records_engine_and_sends_requested_reasoning_effort(self):
+        requests = []
+        def handle(request):
+            if request.method == "GET":
+                return httpx.Response(200, json={"build_info": "test-build", "chat_template": "template",
+                                                "default_generation_settings": {"n_ctx": 16384}})
+            requests.append(json.loads(request.content))
+            return httpx.Response(200, text='data: {"choices":[{"delta":{"content":"Done"},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n')
+
+        async def fake_case(case, settings, model):
+            await model.generate([], lambda _: None)
+            return {"case": case["id"], "all_turns_executed": True,
+                    "turns": [{"mechanical_pass": True}]}
+
+        with TemporaryDirectory() as directory:
+            args = SimpleNamespace(reasoning_effort="medium", repeats=1, output=Path(directory) / "report.json")
+            report = {"runs": []}
+            client = httpx.AsyncClient(transport=httpx.MockTransport(handle))
+            with patch("httpx.AsyncClient", return_value=client), patch.object(evaluation, "run_case", side_effect=fake_case):
+                asyncio.run(evaluation.evaluate(args, {"cases": [{"id": "test"}]},
+                                                Settings(inference_provider="llama_cpp"), report))
+            self.assertEqual(report["engine_before"]["build_info"], "test-build")
+            self.assertEqual(report["engine_after"], report["engine_before"])
+            self.assertEqual(requests[0]["reasoning_effort"], "medium")
+            self.assertEqual(len(report["runs"]), 1)
+
+    def test_cli_rejects_reasoning_override_for_ollama_before_any_live_call(self):
+        with TemporaryDirectory() as directory:
+            output = Path(directory) / "report.json"
+            argv = ["evaluate-conversations.py", "--live", "--reasoning-effort", "medium", "--output", str(output)]
+            with patch("sys.argv", argv), patch("sys.stderr", io.StringIO()), \
+                    patch.object(evaluation, "live_settings", return_value=Settings()), \
+                    patch.object(evaluation, "evaluate") as live:
+                with self.assertRaises(SystemExit) as error:
+                    evaluation.main()
+            self.assertEqual(error.exception.code, 2)
+            live.assert_not_called()
+            self.assertFalse(output.exists())

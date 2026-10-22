@@ -59,6 +59,9 @@ test retrieves the same synthetic journal through the production memory tool.
 
 ## Next controlled experiments
 
+Follow-up: [two literal-search guidance trials](2026-10-21-retrieval-guidance.md)
+did not establish reliable recall; neither prompt variant was retained.
+
 1. Compare a small, explicit literal-search query/recovery change against this
    fixture, holding model and settings fixed. Check the missing-memory and
    corrected-memory cases too; improving recall must not create invented facts.

@@ -7,8 +7,11 @@ from .agent import available_tools
 
 
 class LlamaCpp:
-    def __init__(self, settings, client):
+    def __init__(self, settings, client, *, reasoning_effort="low"):
+        if reasoning_effort not in ("low", "medium", "high"):
+            raise ValueError("reasoning_effort must be low, medium or high.")
         self.settings, self.client = settings, client
+        self.reasoning_effort = reasoning_effort
 
     @staticmethod
     def wire_messages(messages):
@@ -29,7 +32,7 @@ class LlamaCpp:
     async def generate(self, messages, on_text):
         body = {"model": self.settings.model, "messages": self.wire_messages(messages),
                 "tools": available_tools(self.settings), "stream": True, "max_tokens": self.settings.max_output_tokens,
-                "reasoning_format": "deepseek", "reasoning_effort": "low"}
+                "reasoning_format": "deepseek", "reasoning_effort": self.reasoning_effort}
         content, calls, size, finished = "", {}, 0, False
         async with asyncio.timeout(300):
             async with self.client.stream("POST", self.settings.llama_cpp_upstream.rstrip("/") +

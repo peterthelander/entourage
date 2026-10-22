@@ -26,8 +26,15 @@ output files for comparisons; each command replaces its output file. Use
 the previous report's mechanical counts, settings and fixture-identity comparison.
 Compare the same cases, repeat count and fixture before attributing differences
 to a model/configuration change. Sampling remains server-controlled; repeats are
-not deterministic. The report records application settings, not engine build,
-quantization or engine launch parameters; record those alongside a comparison.
+not deterministic. Reports include application settings, source hashes and
+llama.cpp engine metadata before/after live runs where available. Engine snapshots
+identify the reported build, quantization, template and generation defaults, not
+every launch setting or hardware condition. Older reports lack these snapshots.
+
+For llama.cpp, `--reasoning-effort low|medium|high` overrides only evaluation
+requests; the production transport still defaults to low. Keep output limits
+fixed when testing effort under current operating constraints, and count
+truncations as failures. Live non-low overrides with Ollama are rejected.
 
 ## Scope and evidence
 

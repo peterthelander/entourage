@@ -162,7 +162,24 @@ def live_settings():
 async def evaluate(args, fixture, settings, report):
     import httpx
     async with httpx.AsyncClient(timeout=300, trust_env=False) as client:
-        model = LlamaCpp(settings, client) if settings.inference_provider == "llama_cpp" else Ollama(settings, client)
+        async def engine_metadata():
+            if settings.inference_provider != "llama_cpp":
+                return {"status": "not_captured", "provider": settings.inference_provider}
+            try:
+                response = await client.get(settings.llama_cpp_upstream.rstrip("/") + "/props", timeout=10)
+                response.raise_for_status()
+                props = response.json()
+                return {"status": "captured", **{key: props.get(key) for key in (
+                    "build_info", "model_alias", "model_ftype", "total_slots", "chat_template_caps",
+                    "default_generation_settings")},
+                    "chat_template_sha256": hashlib.sha256(props.get("chat_template", "").encode()).hexdigest()}
+            except (httpx.HTTPError, ValueError, TypeError, AttributeError) as error:
+                return {"status": "unavailable", "error_type": type(error).__name__}
+
+        report["engine_before"] = await engine_metadata()
+        save(args.output, report)
+        model = (LlamaCpp(settings, client, reasoning_effort=args.reasoning_effort)
+                 if settings.inference_provider == "llama_cpp" else Ollama(settings, client))
         for repeat in range(1, args.repeats + 1):
             for case in fixture["cases"]:
                 row = await run_case(case, settings, model)
@@ -172,6 +189,7 @@ async def evaluate(args, fixture, settings, report):
                 print(json.dumps({"case": row["case"], "repeat": repeat,
                                   "mechanical_pass": row["all_turns_executed"] and all(t["mechanical_pass"] for t in row["turns"]),
                                   "semantic_review": "pending"}), flush=True)
+        report["engine_after"] = await engine_metadata()
 
 
 def save(path, report):
@@ -198,6 +216,8 @@ def main():
     parser.add_argument("--baseline", type=Path, help="Compare mechanical counts with an earlier report; inspect answers separately")
     parser.add_argument("--case", action="append", dest="cases", help="Select case ID; repeatable")
     parser.add_argument("--repeats", type=int, default=3)
+    parser.add_argument("--reasoning-effort", choices=("low", "medium", "high"), default="low",
+                        help="llama.cpp request override only; production service configuration is unchanged")
     args = parser.parse_args()
     if not 1 <= args.repeats <= 10:
         parser.error("--repeats must be between 1 and 10")
@@ -208,15 +228,21 @@ def main():
             parser.error("Unknown case ID")
         fixture["cases"] = [case for case in fixture["cases"] if case["id"] in args.cases]
     settings = live_settings() if args.live else Settings(gemini_api_key="synthetic-evaluation-only")
+    if args.live and settings.inference_provider != "llama_cpp" and args.reasoning_effort != "low":
+        parser.error("--reasoning-effort overrides require the llama_cpp provider")
     report = {"version": 1, "created_at": datetime.now(timezone.utc).isoformat(), "live": args.live,
               "requested_repeats": args.repeats,
               "settings": {key: getattr(settings, key) for key in ("inference_provider", "model", "context_tokens",
                            "max_output_tokens", "context_session_gap_minutes")},
-              "transport": "Production adapter defaults; llama.cpp reasoning effort low, format deepseek. Sampling is server-controlled.",
+              "transport": f"llama.cpp reasoning effort {args.reasoning_effort}, format deepseek; Ollama uses production defaults. Sampling is server-controlled.",
+              "inference_options": {"reasoning_effort": args.reasoning_effort if settings.inference_provider == "llama_cpp" else None,
+                                    "reasoning_format": "deepseek" if settings.inference_provider == "llama_cpp" else None},
               "scope": "Synthetic worker/memory evaluation. Web responses are fixtures; no real device or website checks. Mechanical checks do not establish semantic correctness.",
               "tools": available_tools(settings), "fixture": fixture, "runs": []}
     report["fixture_sha256"] = hashlib.sha256(json.dumps(fixture, sort_keys=True).encode()).hexdigest()
     report["runner_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    report["source_sha256"] = {name: hashlib.sha256((ROOT / "server/entourage_server" / name).read_bytes()).hexdigest()
+                               for name in ("agent.py", "memory.py", "llama_cpp.py", "config.py", "journals.py")}
     report["initial_inputs"] = {case["id"]: build_context(case["turns"][0]["text"], case.get("history", []),
                                settings, created_at=case["turns"][0]["created_at"]) for case in fixture["cases"]}
     save(args.output, report)
@@ -227,6 +253,9 @@ def main():
         baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
         report["baseline"] = {"fixture_matches": baseline.get("fixture_sha256") == report["fixture_sha256"],
                               "runner_matches": baseline.get("runner_sha256") == report["runner_sha256"],
+                              "source_matches": (baseline.get("source_sha256") == report["source_sha256"]
+                                                 if baseline.get("source_sha256") else None),
+                              "inference_options": baseline.get("inference_options"),
                               "settings": baseline["settings"], "summary": summarize(baseline),
                               "note": "Compare matched cases and repeats; these counts do not score semantic quality."}
     save(args.output, report)

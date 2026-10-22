@@ -18,7 +18,10 @@ state remain independently deployable.
   Large-history export efficiency and timezone-change migration remain future work. Literal keyword search
   returns five messages per page, defaults to user evidence, and supports oldest/newest
   ordering and direct source-message reads; semantic recall and automatic correction
-  resolution remain future work. Small-model tool use needs continued live evaluation.
+  resolution remain future work. Memory results now expose numeric source IDs;
+  citations, source dates and unsupported combinations still fail in live model
+  evaluations despite successful retrieval. See the
+  [source-identifier experiment](experiments/2026-10-21-source-identifiers.md).
 - Inventory and date reading support coverage questions and topic summaries.
   Long ranges need pagination; the four-call budget limits a single-turn overview.
   Persisted summaries and a larger-corpus index remain future work.
