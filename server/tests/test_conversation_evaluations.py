@@ -89,6 +89,15 @@ class ConversationEvaluationTests(unittest.TestCase):
         self.assertFalse(evaluation.assess(turn, "completed", "Birch-92 (ID 20).", tools)["mechanical_pass"])
         self.assertFalse(evaluation.assess(turn, "failed", "Birch-92 (ID 2).", tools)["mechanical_pass"])
 
+    def test_comparison_fixture_separates_source_diagnostics_from_product_answers(self):
+        fixture = evaluation.load_cases(ROOT / 'server/tests/fixtures/personal-agent-comparison.json')
+        self.assertEqual(len(fixture['cases']), 30)
+        self.assertGreaterEqual(sum(len(case['turns']) > 1 for case in fixture['cases']), 10)
+        case = next(c for c in fixture['cases'] if c['id'] == 'recall-after-pause')
+        result = evaluation.assess(case['turns'][0], 'completed', 'Mira and Sol are coming.', [{'name': 'searchMemories'}])
+        self.assertTrue(result['mechanical_pass'])
+        self.assertFalse(all(result['diagnostics'].values()))
+
     def test_live_runner_records_engine_and_sends_requested_reasoning_effort(self):
         requests = []
         def handle(request):
@@ -127,3 +136,32 @@ class ConversationEvaluationTests(unittest.TestCase):
             self.assertEqual(error.exception.code, 2)
             live.assert_not_called()
             self.assertFalse(output.exists())
+
+    def test_provider_http_failure_stops_batch_and_preserves_safe_diagnostics(self):
+        class Denied:
+            async def generate(self, messages, on_text):
+                from evaluation_gemini import GeminiHTTPError
+                raise GeminiHTTPError(403)
+        with TemporaryDirectory() as directory:
+            args = SimpleNamespace(reasoning_effort='low', repeats=3, gemini_model='test',
+                                   output=Path(directory) / 'report.json')
+            report = {'runs': []}
+            with patch.object(evaluation, 'GeminiEvaluation', return_value=Denied()), \
+                    patch.object(evaluation, 'evaluation_key', return_value='private-test-key'):
+                asyncio.run(evaluation.evaluate(args, {'cases': [self.cases['missing-memory']]}, self.settings, report))
+            self.assertEqual(len(report['runs']), 1)
+            failure = report['runs'][0]['turns'][0]['inference_failures'][0]
+            self.assertEqual(failure['http_status'], 403)
+            self.assertIn('aborted', report)
+            self.assertNotIn('private-test-key', json.dumps(report))
+
+    def test_offline_gemini_preparation_never_loads_credentials(self):
+        with TemporaryDirectory() as directory:
+            output = Path(directory) / 'prepared.json'
+            with patch('sys.argv', ['evaluate-conversations.py', '--gemini-model', 'test', '--output', str(output)]), \
+                    patch.object(evaluation, 'evaluation_key', side_effect=AssertionError('must not read key')), \
+                    patch.object(evaluation, 'live_settings', side_effect=AssertionError('must not read config')):
+                self.assertEqual(evaluation.main(), 0)
+            report = json.loads(output.read_text(encoding='utf-8'))
+            self.assertFalse(report['live'])
+            self.assertEqual(report['runs'], [])

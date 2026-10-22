@@ -21,6 +21,7 @@ from .storage import StoreError
 from .execution_store import ExecutionStore
 from .agent import Ollama, Worker
 from .llama_cpp import LlamaCpp
+from .gemini import Gemini
 from .access import AccessControl
 from .worker_lock import worker_lock
 from .journal_refresh import JournalRefresh
@@ -51,7 +52,7 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
                 refresh = JournalRefresh(store, config.journal_timezone)
                 stop_refresh = asyncio.Event()
                 refresh_task = asyncio.create_task(refresh.run(stop_refresh))
-                transport = LlamaCpp if config.inference_provider == "llama_cpp" else Ollama
+                transport = {"llama_cpp": LlamaCpp, "ollama": Ollama, "gemini": Gemini}[config.inference_provider]
                 worker = Worker(store, config, model or transport(config, client), refresh)
                 app.state.worker = worker
                 task = asyncio.create_task(worker.run())
@@ -102,7 +103,7 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
 
     @app.get("/api/v1/health", response_model=HealthResponse)
     def health(response: Response) -> HealthResponse:
-        """Process liveness only; does not test Ollama or promise chat readiness."""
+        """Process liveness only; does not test inference or promise chat readiness."""
         unavailable = config.execution_enabled and (app.state.worker_task is None or app.state.worker_task.done())
         if unavailable:
             response.status_code = 503

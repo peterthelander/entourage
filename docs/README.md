@@ -31,6 +31,7 @@ configuration table and link to them rather than copying values into several gui
 - [October 21 word-search interface comparison](experiments/2026-10-21-word-search.md)
 - [October 21 reasoning-effort comparison](experiments/2026-10-21-reasoning-comparison.md)
 - [October 21 explicit source-identifier experiment](experiments/2026-10-21-source-identifiers.md)
+- [October 22 broader suite and local/Gemini comparison](experiments/2026-10-22-model-comparison.md)
 - [Context selection experiments and runner](experiments/context-experiments.md)
 - [Web lookup and page-reading evaluations](experiments/web-lookup-evaluation.md)
 

@@ -38,12 +38,12 @@ Server-only configuration is read at startup:
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `ENTOURAGE_OLLAMA_UPSTREAM` | `http://127.0.0.1:11434` | Local or remote Ollama HTTP(S) origin |
-| `ENTOURAGE_INFERENCE_PROVIDER` | `ollama` | `ollama` or `llama_cpp` |
+| `ENTOURAGE_INFERENCE_PROVIDER` | `ollama` | `ollama`, `llama_cpp` or `gemini`; see [selection examples](EXECUTION.md#start-python) |
 | `ENTOURAGE_LLAMA_CPP_UPSTREAM` | `http://127.0.0.1:8080` | llama.cpp origin without `/v1`; launcher also reads ignored `data/inference.json` |
 | `ENTOURAGE_MODEL` | `qwen3.5:4b` | Server-owned model selection |
-| `ENTOURAGE_GEMINI_API_KEY` | empty | Server-only lookup credential; also accepts `GEMINI_API_KEY`, then ignored `server/data/gemini-api-key.txt` |
+| `ENTOURAGE_GEMINI_API_KEY` | empty | Server-only Gemini inference/search credential; also accepts `GEMINI_API_KEY`, then ignored `server/data/gemini-api-key.txt` |
 | `ENTOURAGE_WEB_SEARCH_MODEL` | `gemini-2.5-flash-lite` | Gemini model used only for Google Search research; main inference selection is unchanged |
-| `ENTOURAGE_CONTEXT_TOKENS` | `8192` | Ollama context window; integer 2048–262144, subject to model/hardware limits |
+| `ENTOURAGE_CONTEXT_TOKENS` | `8192` | Application context budget; integer 2048–262144, subject to model/hardware limits; does not change hosted model context capacity |
 | `ENTOURAGE_MAX_OUTPUT_TOKENS` | `1536` | Maximum generated tokens per model call; positive, at most half the context window |
 | `ENTOURAGE_CONTEXT_SESSION_GAP_MINUTES` | `60` | Start fresh active context after a longer gap between user messages; integer 1–1440. Older conversations remain available through memory tools. |
 | `ENTOURAGE_DATABASE_PATH` | `server/data/entourage.sqlite3` | SQLite file; default is anchored to the server directory, independent of working directory |

@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
 from entourage_server.agent import Ollama, build_context, calculate
 from entourage_server.app import create_app
 from entourage_server.config import Settings
+from entourage_server.gemini import Gemini
 from entourage_server.execution_store import ExecutionStore
 from entourage_server.worker_lock import worker_lock
 from entourage_server.journals import export_journals
@@ -87,6 +88,36 @@ class ExecutionTests(unittest.TestCase):
         # Model must not be called again for the persisted completed turn.
         with self.client(ScriptedModel()) as restarted:
             self.assertEqual(restarted.get(f"/api/v1/turns/{self.turn}").json()["answer"], result["answer"])
+
+    def test_configured_gemini_runs_persisted_calculator_loop(self):
+        from dataclasses import replace
+        settings = replace(self.settings, inference_provider="gemini", model="gemini-test", gemini_api_key="private-test-key")
+        requests = []
+        signature = {"google": {"thought_signature": "opaque"}}
+        def handle(request):
+            body = json.loads(request.content)
+            requests.append(body)
+            self.assertEqual(body["model"], "gemini-test")
+            if len(requests) == 1:
+                message = {"tool_calls": [{"id": "c1", "type": "function", "extra_content": signature,
+                    "function": {"name": "calculate", "arguments": '{"operation":"multiply","a":12,"b":13}'}}]}
+                finish = "tool_calls"
+            else:
+                self.assertEqual(body["messages"][-2]["tool_calls"][0]["extra_content"], signature)
+                self.assertEqual(json.loads(body["messages"][-1]["content"])["result"], 156)
+                message, finish = {"content": "The answer is 156."}, "stop"
+            return httpx.Response(200, json={"choices": [{"finish_reason": finish, "message": message}]})
+        mock_client = httpx.AsyncClient(transport=httpx.MockTransport(handle))
+        with patch("entourage_server.app.Gemini", side_effect=lambda config, _: Gemini(config, mock_client)) as selected:
+            with TestClient(create_app(settings), headers={"Authorization": f"Bearer {TOKEN}"}) as client:
+                self.submit(client)
+                result = self.wait(client, {"completed", "failed"})
+                self.assertEqual(result["status"], "completed")
+                self.assertEqual(result["answer"], "The answer is 156.")
+                self.assertEqual(client.get("/api/v1/health").json()["model"], "gemini-test")
+                selected.assert_called_once()
+                self.assertNotIn("private-test-key", json.dumps(result))
+        asyncio.run(mock_client.aclose())
 
     def test_memory_tool_retrieves_old_evidence_and_persists_result(self):
         store = ExecutionStore(self.path)

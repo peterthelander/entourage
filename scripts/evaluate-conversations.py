@@ -17,6 +17,7 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "server"))
+sys.path.insert(0, str(ROOT / "scripts"))
 
 from entourage_server.agent import Worker, Ollama, build_context, available_tools
 from entourage_server.config import Settings
@@ -24,6 +25,7 @@ from entourage_server.execution_store import ExecutionStore
 from entourage_server.journals import export_journals
 from entourage_server.llama_cpp import LlamaCpp
 from entourage_server.storage import SINGLE_CHAT_ID
+from evaluation_gemini import GeminiEvaluation, evaluation_key
 
 FIXTURE = ROOT / "server/tests/fixtures/conversation-evaluations.json"
 
@@ -42,11 +44,12 @@ def load_cases(path):
         for turn in case["turns"]:
             if datetime.fromisoformat(turn["created_at"]).tzinfo is None:
                 raise ValueError("Turn timestamps must include a timezone.")
-            for kind, patterns in turn.get("checks", {}).items():
-                if kind not in {"contains", "excludes"}:
-                    raise ValueError("Unknown check kind.")
-                for pattern in patterns:
-                    re.compile(pattern)
+            for field in ("checks", "diagnostic_checks"):
+                for kind, patterns in turn.get(field, {}).items():
+                    if kind not in {"contains", "excludes"}:
+                        raise ValueError("Unknown check kind.")
+                    for pattern in patterns:
+                        re.compile(pattern)
     return fixture
 
 
@@ -66,23 +69,32 @@ def assess(turn, status, answer, tools):
         for pattern in patterns:
             found = bool(re.search(pattern, normalized, re.I))
             checks[f"{kind}:{pattern}"] = found if kind == "contains" else not found
-    return {"checks": checks, "mechanical_pass": all(checks.values()),
+    diagnostics = {}
+    for kind, patterns in turn.get("diagnostic_checks", {}).items():
+        for pattern in patterns:
+            found = bool(re.search(pattern, normalized, re.I))
+            diagnostics[f"{kind}:{pattern}"] = found if kind == "contains" else not found
+    return {"checks": checks, "mechanical_pass": all(checks.values()), "diagnostics": diagnostics,
             "semantic_review": "pending"}
 
 
 class RecordingModel:
     def __init__(self, model):
-        self.model, self.requests, self.responses = model, [], []
+        self.model, self.requests, self.responses, self.failures = model, [], [], []
 
     async def generate(self, messages, on_text):
         self.requests.append(deepcopy(messages))
-        reply = await self.model.generate(messages, on_text)
+        try:
+            reply = await self.model.generate(messages, on_text)
+        except Exception as error:
+            self.failures.append({"error_type": type(error).__name__, "http_status": getattr(error, "http_status", None)})
+            raise
         self.responses.append(deepcopy(reply))
         return reply
 
 
 async def run_case(case, settings, model):
-    # No production store, refresh process, device, public website or Google API.
+    # No production store, refresh process, device or real web-tool calls.
     with TemporaryDirectory(prefix="entourage-eval-") as directory:
         settings = replace(settings, database_path=Path(directory) / "evaluation.sqlite3",
                            device_timeout_seconds=1)
@@ -121,6 +133,7 @@ async def run_case(case, settings, model):
                     db.execute("UPDATE messages SET created_at=? WHERE turn_id=?", (turn["created_at"], turn_id))
                 before = len(recorder.requests)
                 response_before = len(recorder.responses)
+                failures_before = len(recorder.failures)
                 web_before = len(fixture_calls)
                 started = time.monotonic()
                 await Worker(store, settings, recorder).execute(store.claim())
@@ -135,11 +148,13 @@ async def run_case(case, settings, model):
                              "answer": result["answer"], "error": result["error"],
                              "seconds": round(time.monotonic() - started, 3),
                              "inputs": recorder.requests[before:], "responses": recorder.responses[response_before:], "tools": tools,
+                             "inference_failures": recorder.failures[failures_before:],
                              "web_fixtures": fixture_calls[web_before:],
                              **assess(turn, result["status"], result["answer"], tools)})
                 if result["status"] != "completed":
                     break
-        return {"case": case["id"], "rubric": case["rubric"], "turns": runs,
+        return {"case": case["id"], "category": case.get("category"), "rubric": case["rubric"],
+                "diagnostic_rubric": case.get("diagnostic_rubric", []), "turns": runs,
                 "all_turns_executed": len(runs) == len(case["turns"])}
 
 
@@ -163,6 +178,9 @@ async def evaluate(args, fixture, settings, report):
     import httpx
     async with httpx.AsyncClient(timeout=300, trust_env=False) as client:
         async def engine_metadata():
+            if getattr(args, "gemini_model", None) or settings.inference_provider == "gemini":
+                return {"status": "hosted", "provider": "gemini", "requested_model": args.gemini_model or settings.model,
+                        "note": "Provider version/usage recorded on each successful response; server internals unavailable."}
             if settings.inference_provider != "llama_cpp":
                 return {"status": "not_captured", "provider": settings.inference_provider}
             try:
@@ -178,8 +196,12 @@ async def evaluate(args, fixture, settings, report):
 
         report["engine_before"] = await engine_metadata()
         save(args.output, report)
-        model = (LlamaCpp(settings, client, reasoning_effort=args.reasoning_effort)
-                 if settings.inference_provider == "llama_cpp" else Ollama(settings, client))
+        if getattr(args, "gemini_model", None) or settings.inference_provider == "gemini":
+            model = GeminiEvaluation(settings, client, model=args.gemini_model or settings.model, api_key=evaluation_key(ROOT),
+                                     reasoning_effort=args.reasoning_effort)
+        else:
+            model = (LlamaCpp(settings, client, reasoning_effort=args.reasoning_effort)
+                     if settings.inference_provider == "llama_cpp" else Ollama(settings, client))
         for repeat in range(1, args.repeats + 1):
             for case in fixture["cases"]:
                 row = await run_case(case, settings, model)
@@ -189,6 +211,10 @@ async def evaluate(args, fixture, settings, report):
                 print(json.dumps({"case": row["case"], "repeat": repeat,
                                   "mechanical_pass": row["all_turns_executed"] and all(t["mechanical_pass"] for t in row["turns"]),
                                   "semantic_review": "pending"}), flush=True)
+                if any(f.get("http_status") for t in row["turns"] for f in t.get("inference_failures", [])):
+                    report["aborted"] = "Provider HTTP failure; remaining cases were not run. Inspect inference_failures before comparing quality."
+                    report["engine_after"] = await engine_metadata()
+                    return
         report["engine_after"] = await engine_metadata()
 
 
@@ -217,7 +243,8 @@ def main():
     parser.add_argument("--case", action="append", dest="cases", help="Select case ID; repeatable")
     parser.add_argument("--repeats", type=int, default=3)
     parser.add_argument("--reasoning-effort", choices=("low", "medium", "high"), default="low",
-                        help="llama.cpp request override only; production service configuration is unchanged")
+                        help="Evaluation request override for llama.cpp or Gemini; production configuration is unchanged")
+    parser.add_argument("--gemini-model", help="Evaluation-only hosted model; uses the existing private Google key in live mode")
     args = parser.parse_args()
     if not 1 <= args.repeats <= 10:
         parser.error("--repeats must be between 1 and 10")
@@ -228,8 +255,8 @@ def main():
             parser.error("Unknown case ID")
         fixture["cases"] = [case for case in fixture["cases"] if case["id"] in args.cases]
     settings = live_settings() if args.live else Settings(gemini_api_key="synthetic-evaluation-only")
-    if args.live and settings.inference_provider != "llama_cpp" and args.reasoning_effort != "low":
-        parser.error("--reasoning-effort overrides require the llama_cpp provider")
+    if args.live and not args.gemini_model and settings.inference_provider not in ("llama_cpp", "gemini") and args.reasoning_effort != "low":
+        parser.error("--reasoning-effort overrides require llama_cpp or gemini")
     report = {"version": 1, "created_at": datetime.now(timezone.utc).isoformat(), "live": args.live,
               "requested_repeats": args.repeats,
               "settings": {key: getattr(settings, key) for key in ("inference_provider", "model", "context_tokens",
@@ -241,8 +268,15 @@ def main():
               "tools": available_tools(settings), "fixture": fixture, "runs": []}
     report["fixture_sha256"] = hashlib.sha256(json.dumps(fixture, sort_keys=True).encode()).hexdigest()
     report["runner_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    report["evaluation_adapter_sha256"] = hashlib.sha256((ROOT / "scripts/evaluation_gemini.py").read_bytes()).hexdigest()
+    report["evaluated_model"] = {"provider": "gemini" if args.gemini_model else settings.inference_provider,
+                                 "model": args.gemini_model or settings.model}
+    if args.gemini_model or settings.inference_provider == "gemini":
+        report["transport"] = "Gemini OpenAI-compatible REST; non-streaming; identical application tools and budgets; provider sampling defaults."
+        report["inference_options"] = {"reasoning_effort": args.reasoning_effort, "stream": False,
+                                       "max_tokens": settings.max_output_tokens}
     report["source_sha256"] = {name: hashlib.sha256((ROOT / "server/entourage_server" / name).read_bytes()).hexdigest()
-                               for name in ("agent.py", "memory.py", "llama_cpp.py", "config.py", "journals.py")}
+                               for name in ("agent.py", "memory.py", "llama_cpp.py", "config.py", "journals.py", "gemini.py")}
     report["initial_inputs"] = {case["id"]: build_context(case["turns"][0]["text"], case.get("history", []),
                                settings, created_at=case["turns"][0]["created_at"]) for case in fixture["cases"]}
     save(args.output, report)
@@ -253,6 +287,8 @@ def main():
         baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
         report["baseline"] = {"fixture_matches": baseline.get("fixture_sha256") == report["fixture_sha256"],
                               "runner_matches": baseline.get("runner_sha256") == report["runner_sha256"],
+                              "evaluation_adapter_matches": (baseline.get("evaluation_adapter_sha256") == report["evaluation_adapter_sha256"]
+                                                             if baseline.get("evaluation_adapter_sha256") else None),
                               "source_matches": (baseline.get("source_sha256") == report["source_sha256"]
                                                  if baseline.get("source_sha256") else None),
                               "inference_options": baseline.get("inference_options"),

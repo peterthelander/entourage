@@ -48,6 +48,33 @@ sessions when the user refers back to them. For longer
 context, restart the llama.cpp engine with a larger `-c` value before raising the service setting.
 Ollama remains available by selecting provider `ollama` and its existing upstream.
 
+Gemini is also supported for main agent inference. Set these entries in ignored
+`server/data/inference.json` (or use the corresponding environment variables),
+then restart with the normal launcher:
+
+```json
+{
+  "ENTOURAGE_INFERENCE_PROVIDER": "gemini",
+  "ENTOURAGE_MODEL": "gemini-4-argon",
+  "ENTOURAGE_CONTEXT_TOKENS": 16384,
+  "ENTOURAGE_MAX_OUTPUT_TOKENS": 2048
+}
+```
+
+Use the existing server-side Google key configured below; keep it out of this JSON
+file. Missing credentials prevent an executing Gemini service from starting.
+Switch back by restoring provider `llama_cpp` and its local model ID. Selection
+is explicit; provider failures never cause an automatic fallback.
+
+Main Gemini inference sends the assembled active conversation and any retrieved
+memory/tool results to Google. This differs from using Gemini only for web search,
+which sends the focused search query. Memory storage, context selection, tool
+execution and device permissions remain owned by the service/client. Gemini uses
+the same four-call budget, low reasoning effort and output limit, with a five-minute
+total request deadline and 2 MiB response cap. Its complete responses appear after
+generation finishes; incremental streaming is not implemented for this adapter.
+Search remains a separate tool using `ENTOURAGE_WEB_SEARCH_MODEL`.
+
 The normal launcher discovers its own Tailscale login and DNS name using the local
 Tailscale daemon. It permits that login through Tailscale Serve, and direct localhost
 access for the local browser. Python stays bound to loopback. It accepts Serve identity
@@ -124,7 +151,7 @@ The API project's quotas and billing tier determine actual cost and availability
 see [Google's pricing](https://ai.google.dev/gemini-api/docs/pricing). The server
 does not enable billing or switch models/providers on failure.
 
-Configured servers offer `searchWeb` to llama.cpp and Ollama. The agent can look up
+Configured servers offer `searchWeb` to all three inference providers. The agent can look up
 a named outing without an explicit search request when useful, using the town
 from context or asking when the place is ambiguous. Only the focused query goes to
 Google, not the full conversation or memory history. Gemini's bounded research
@@ -139,7 +166,7 @@ Without a key the model is not offered web search. Enabling it still requires a
 live provider check and repeated conversations on the selected model to evaluate
 when it chooses to search; scripted execution tests do not establish that behavior.
 
-`readWebPage` is available to both inference providers even without a search key.
+`readWebPage` is available to all inference providers even without a search key.
 It opens public HTTP(S) pages and returns extracted static text, the final source
 URL, fetch time, and links to follow. Use `offset` / `next_offset` for another
 8,000-character excerpt, or `find` for a literal phrase with surrounding text.

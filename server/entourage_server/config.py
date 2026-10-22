@@ -27,8 +27,8 @@ class Settings:
     web_search_model: str = "gemini-2.5-flash-lite"
 
     def __post_init__(self) -> None:
-        if self.inference_provider not in ("ollama", "llama_cpp"):
-            raise ValueError("ENTOURAGE_INFERENCE_PROVIDER must be ollama or llama_cpp.")
+        if self.inference_provider not in ("ollama", "llama_cpp", "gemini"):
+            raise ValueError("ENTOURAGE_INFERENCE_PROVIDER must be ollama, llama_cpp or gemini.")
         if not self.web_search_model or any(c not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._" for c in self.web_search_model):
             raise ValueError("ENTOURAGE_WEB_SEARCH_MODEL must be a model ID without a path.")
         self.validate_origin(self.llama_cpp_upstream, "ENTOURAGE_LLAMA_CPP_UPSTREAM")
@@ -47,6 +47,8 @@ class Settings:
         # Accessing port validates malformed and out-of-range ports.
         if url.port == 0:
             raise ValueError("Ollama port must be greater than zero.")
+        if self.inference_provider == "gemini" and self.execution_enabled and not self.gemini_api_key.strip():
+            raise ValueError("Gemini inference requires a server-side API key.")
         if not self.model.strip():
             raise ValueError("ENTOURAGE_MODEL must not be empty.")
         if self.execution_enabled and not self.trust_local and len(self.api_token) < 32:
