@@ -4,9 +4,12 @@ Start with the [project README](../README.md). Coding agents also follow [AGENTS
 
 ## Ongoing development
 
+- [Ongoing work streams](ongoing-work-streams.md)
 - [Design principles](design-principles.md)
 - [Technical debt and remaining work](technical-debt.md)
 - [Personal context and memory roadmap](personal-context-roadmap.md)
+- [Memory ingestion development and complete pilot](memory-ingestion.md)
+- [Batch ingestion experiment workspace](../ingestion/README.md)
 - [Recursive self-improvement ideas](recursive-self-improvement.md)
 
 Keep ongoing development documents directly in `docs/`. Roadmaps and ideas retain
@@ -25,6 +28,14 @@ configuration table and link to them rather than copying values into several gui
 
 ## Experiments
 
+- [Reviewed memory integration and live pilot, October 23](experiments/2026-10-23-reviewed-memory-integration.md)
+
+- [October 22 structure, support review and full ingestion pilot](experiments/2026-10-22-article-workflow.md)
+- [October 22 initial article-generation trials](experiments/2026-10-22-article-generation.md)
+- [October 22 generic mail normalization](experiments/2026-10-22-mail-normalization.md)
+- [Generic memory candidate contracts and multi-topic pilot](experiments/memory-candidate-contracts.md)
+- [October 22 ski-trip discovery pilot](experiments/2026-10-22-ski-trip-discovery.md)
+- [October 22 initial mail filtering](experiments/2026-10-22-ingestion-filtering.md)
 - [Conversation evaluation suite](experiments/conversation-evaluations.md)
 - [October 21 conversation baseline and findings](experiments/2026-10-21-conversation-baseline.md)
 - [October 21 literal-search guidance trials](experiments/2026-10-21-retrieval-guidance.md)

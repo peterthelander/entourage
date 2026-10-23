@@ -4,11 +4,13 @@ import asyncio
 import json
 import math
 import time
+from copy import deepcopy
 from datetime import datetime, timedelta
 
 import httpx
 
 from .memory import search_memories, memory_inventory, read_memories
+from .knowledge import KNOWLEDGE_READ_TOOLS, KNOWLEDGE_PROMPT, knowledge_operation, load_current
 from .web_search import SEARCH_TOOL, search_web
 from .web_pages import PAGE_TOOL, read_web_page
 
@@ -86,7 +88,25 @@ for name, description, properties, required in [
 
 
 def available_tools(settings):
-    return TOOLS + [PAGE_TOOL] + ([SEARCH_TOOL] if settings.gemini_api_key else [])
+    tools = TOOLS
+    if settings.knowledge_enabled:
+        tools = deepcopy(TOOLS)
+        for tool in tools:
+            if tool["function"]["name"] == "searchMemories":
+                tool["function"]["description"] = (
+                    "Search saved user conversations AND reviewed imported records/articles together. "
+                    "Conversations require all literal keywords; imported search may return clearly labeled "
+                    "partial word-overlap leads when phrases miss. Use short topic words. Results separate "
+                    "conversation_memory and imported_memory. Read matching imported articles with "
+                    "readKnowledgeArticle(slug,snapshot) for details and unknowns. Conversation source "
+                    "message IDs are numeric; imported source IDs are strings. Speaker/date/order pagination "
+                    "filters apply to conversations only; imported coverage is shown separately.")
+            elif tool["function"]["name"] == "getMemoryInventory":
+                tool["function"]["description"] = (
+                    "List conversation journal coverage AND the reviewed imported-article index separately, "
+                    "30 items per page. Imported source timestamps are record dates, not event dates or "
+                    "full export coverage. Use the article slug and snapshot for readKnowledgeArticle.")
+    return tools + [PAGE_TOOL] + ([SEARCH_TOOL] if settings.gemini_api_key else []) + (KNOWLEDGE_READ_TOOLS if settings.knowledge_enabled else [])
 
 
 def _session_history(history, created_at, gap_minutes):
@@ -127,11 +147,16 @@ def build_context(prompt, history, settings=None, *, created_at=None):
     for message in reversed(history[-128:]):
         if len(message["text"]) > remaining:
             break
-        recent.insert(0, {"role": message["role"], "content": message["text"]})
+        if "wire_messages" in message:
+            recent[0:0] = message["wire_messages"]
+        else:
+            recent.insert(0, {"role": message["role"], "content": message["text"]})
         remaining -= len(message["text"])
-    while recent and recent[0]["role"] == "assistant":
+    while recent and recent[0]["role"] != "user":
         recent.pop(0)
-    return [{"role": "system", "content": SYSTEM_PROMPT}, *recent, {"role": "user", "content": prompt.strip()}]
+    system = (SYSTEM_PROMPT.split("For earlier personal conversations", 1)[0] + KNOWLEDGE_PROMPT
+              if settings.knowledge_enabled else SYSTEM_PROMPT)
+    return [{"role": "system", "content": system}, *recent, {"role": "user", "content": prompt.strip()}]
 
 
 def calculate(args):
@@ -165,9 +190,12 @@ class Ollama:
     def __init__(self, settings, client):
         self.settings, self.client = settings, client
 
-    async def generate(self, messages, on_text):
+    async def finalize(self, messages, on_text):
+        return await self.generate(messages, on_text, tools_enabled=False)
+
+    async def generate(self, messages, on_text, *, tools_enabled=True):
         body = {"model": self.settings.model, "think": False, "stream": True,
-                "messages": messages, "tools": available_tools(self.settings), "options": {
+                "messages": messages, "tools": available_tools(self.settings) if tools_enabled else [], "options": {
                     "num_ctx": self.settings.context_tokens, "num_predict": self.settings.max_output_tokens}}
         content, calls, pending, size, done = "", [], b"", 0, False
         async with asyncio.timeout(300):
@@ -240,7 +268,17 @@ class Worker:
     async def execute(self, turn):
         calls_used = 0
         try:
-            messages = build_context(turn["text"], self.store.context_history(turn["conversation_id"]),
+            if self.settings.knowledge_enabled:
+                snapshot = None
+                try:
+                    bundle = await asyncio.to_thread(load_current, self.settings.database_path.parent / "vault" / "knowledge")
+                    snapshot = bundle.snapshot
+                except (OSError, UnicodeError, ValueError, KeyError, TypeError):
+                    pass
+                history = self.store.context_history(turn["conversation_id"], knowledge_snapshot=snapshot)
+            else:
+                history = self.store.context_history(turn["conversation_id"])
+            messages = build_context(turn["text"], history,
                                      self.settings, created_at=turn["created_at"])
             while True:
                 self.store.progress(turn["id"], "")
@@ -262,6 +300,23 @@ class Worker:
                     self.store.finish(turn, answer=answer)
                     return
                 if calls_used + len(calls) > 4:
+                    finalize = getattr(self.model, "finalize", None)
+                    if finalize is not None:
+                        final_messages = [*messages, {"role": "system", "content": (
+                            "The next requested tool batch would exceed the tool-call limit. No more tools "
+                            "can run for this turn. Answer the latest user question from the evidence already "
+                            "retrieved. Clearly state missing evidence, uncertainty or partial coverage. "
+                            "Do not invent facts or claim that any unexecuted action occurred.")}]
+                        self.store.checkpoint(turn["id"], final_messages, calls_used)
+                        final = await finalize(final_messages, partial)
+                        if final.get("tool_calls"):
+                            raise RuntimeError("Finalization must not request tools.")
+                        answer = final.get("content", "").strip()
+                        if not answer:
+                            answer = "I reached the retrieval limit and do not have enough evidence to answer this reliably."
+                        self.store.progress(turn["id"], answer)
+                        self.store.finish(turn, answer=answer)
+                        return
                     self.store.finish(turn, error="Tool-call limit reached. Try a simpler request.")
                     return
                 calls_used += len(calls)
@@ -290,7 +345,26 @@ class Worker:
                                 self.settings.database_path.parent / "vault" / "journals", args)
                             if self.journal_refresh:
                                 found["coverage"] = self.journal_refresh.coverage()
+                            if name == "searchMemories" and self.settings.knowledge_enabled:
+                                imported = await asyncio.to_thread(knowledge_operation,
+                                    self.settings.database_path.parent / "vault" / "knowledge", "searchKnowledge",
+                                    {"keywords": args.get("keywords")})
+                                if imported.get("status") == "ready" and imported.get("total_matches") == 0:
+                                    imported = await asyncio.to_thread(knowledge_operation,
+                                        self.settings.database_path.parent / "vault" / "knowledge", "searchKnowledge",
+                                        {"keywords": args.get("keywords"), "scope": "sources"})
+                                status = "ready" if imported.get("status") == "ready" or found.get("status") == "ready" else "memory_unavailable"
+                                found = {"status": status, "conversation_memory": found, "imported_memory": imported,
+                                         "guidance": "These are separate evidence sources. Missing conversations do not imply missing imports. Read matching imported articles with readKnowledgeArticle using their slug and snapshot; review unknowns and timestamps. Imported searches are not restricted by conversation speaker/date filters."}
+                            elif name == "getMemoryInventory" and self.settings.knowledge_enabled:
+                                imported = await asyncio.to_thread(knowledge_operation,
+                                    self.settings.database_path.parent / "vault" / "knowledge", "getKnowledgeInventory", args)
+                                found = {"conversation_memory": found, "imported_memory": imported,
+                                         "guidance": "Counts and date coverage describe separate collections; imported sources are only the reviewed pilot, not the full archive."}
                             content = json.dumps(found, ensure_ascii=False)
+                        elif name in {tool["function"]["name"] for tool in KNOWLEDGE_READ_TOOLS} and self.settings.knowledge_enabled:
+                            content = json.dumps(await asyncio.to_thread(knowledge_operation,
+                                self.settings.database_path.parent / "vault" / "knowledge", name, args), ensure_ascii=False)
                         elif name in DEVICE_TOOLS:
                             if args:
                                 raise ValueError("This device tool takes no arguments.")

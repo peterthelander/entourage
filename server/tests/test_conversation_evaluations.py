@@ -37,6 +37,48 @@ class ConversationEvaluationTests(unittest.TestCase):
         self.cases = {case["id"]: case for case in evaluation.load_cases(evaluation.FIXTURE)["cases"]}
         self.settings = Settings(gemini_api_key="synthetic")
 
+    def test_production_worker_combines_conversations_and_reviewed_imports(self):
+        from test_knowledge import reviewed_fixture
+        from entourage_server.knowledge_bundle import KnowledgeBundle
+        with TemporaryDirectory() as directory:
+            bundle = reviewed_fixture(Path(directory) / "bundle")
+            snapshot = KnowledgeBundle(bundle).snapshot
+            case = {"id": "knowledge-routing", "rubric": ["Read imported evidence"], "turns": [
+                {"text": "What changed for the garden workday?", "created_at": "2026-10-22T19:00:00+00:00"}]}
+            model = ScriptedModel([
+                call("searchMemories", {"keywords": ["community garden workday", "date change"]}),
+                call("readKnowledgeArticle", {"slug": "community-garden", "snapshot": snapshot}),
+                {"content": "The proposed date changed from May 3 to May 10; attendance is unknown."}])
+            row = asyncio.run(evaluation.run_case(case, self.settings, model, knowledge_bundle=bundle))
+            self.assertEqual(row["turns"][0]["status"], "completed")
+            search = json.loads(model.requests[1][-1]["content"])
+            self.assertEqual(search["imported_memory"]["results"][0]["slug"], "community-garden")
+            self.assertEqual(search["imported_memory"]["match_mode"], "ranked_partial")
+            self.assertIn("conversation_memory", search)
+            article = json.loads(model.requests[2][-1]["content"])
+            self.assertTrue(article["article"]["unknowns"])
+            self.assertEqual([t["name"] for t in row["turns"][0]["tools"]], ["searchMemories", "readKnowledgeArticle"])
+
+    def test_recent_imported_evidence_survives_followup_but_not_inactivity(self):
+        from test_knowledge import reviewed_fixture
+        from entourage_server.knowledge_bundle import KnowledgeBundle
+        with TemporaryDirectory() as directory:
+            bundle = reviewed_fixture(Path(directory) / "bundle")
+            snapshot = KnowledgeBundle(bundle).snapshot
+            case = {"id": "evidence-followup", "rubric": ["Retain evidence within session"], "turns": [
+                {"text": "Read garden history", "created_at": "2026-10-22T19:00:00+00:00"},
+                {"text": "Did I attend?", "created_at": "2026-10-22T19:01:00+00:00"},
+                {"text": "After a pause", "created_at": "2026-10-22T22:00:00+00:00"}]}
+            model = ScriptedModel([
+                call("readKnowledgeArticle", {"slug": "community-garden", "snapshot": snapshot}),
+                {"content": "The proposed date changed."}, {"content": "Attendance is unknown."}, {"content": "A new session."}])
+            row = asyncio.run(evaluation.run_case(case, self.settings, model, knowledge_bundle=bundle))
+            followup = model.requests[2]
+            self.assertTrue(any(m.get("role") == "tool" and "Attendance and whether" in m.get("content", "") for m in followup))
+            after_pause = model.requests[3]
+            self.assertFalse(any(m.get("role") == "tool" for m in after_pause))
+            self.assertTrue(row["all_turns_executed"])
+
     def test_correction_uses_real_journal_retrieval_and_preserves_follow_up(self):
         model = ScriptedModel([call("searchMemories", {"keywords": ["lantern"]}),
                                {"content": "Birch-92 (message=2)."}, {"content": "Previously Cedar-71."}])

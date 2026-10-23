@@ -29,9 +29,12 @@ class LlamaCpp:
             result.append(item)
         return result
 
-    async def generate(self, messages, on_text):
+    async def finalize(self, messages, on_text):
+        return await self.generate(messages, on_text, tools_enabled=False)
+
+    async def generate(self, messages, on_text, *, tools_enabled=True):
         body = {"model": self.settings.model, "messages": self.wire_messages(messages),
-                "tools": available_tools(self.settings), "stream": True, "max_tokens": self.settings.max_output_tokens,
+                "tools": available_tools(self.settings) if tools_enabled else [], "stream": True, "max_tokens": self.settings.max_output_tokens,
                 "reasoning_format": "deepseek", "reasoning_effort": self.reasoning_effort}
         content, calls, size, finished = "", {}, 0, False
         async with asyncio.timeout(300):

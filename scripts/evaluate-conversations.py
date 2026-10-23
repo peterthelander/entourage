@@ -82,6 +82,21 @@ class RecordingModel:
     def __init__(self, model):
         self.model, self.requests, self.responses, self.failures = model, [], [], []
 
+    def __getattr__(self, name):
+        if name == "finalize" and hasattr(self.model, "finalize"):
+            return self._finalize
+        raise AttributeError(name)
+
+    async def _finalize(self, messages, on_text):
+        self.requests.append(deepcopy(messages))
+        try:
+            reply = await self.model.finalize(messages, on_text)
+        except Exception as error:
+            self.failures.append({"error_type": type(error).__name__, "http_status": getattr(error, "http_status", None)})
+            raise
+        self.responses.append(deepcopy(reply))
+        return reply
+
     async def generate(self, messages, on_text):
         self.requests.append(deepcopy(messages))
         try:
@@ -93,11 +108,15 @@ class RecordingModel:
         return reply
 
 
-async def run_case(case, settings, model):
+async def run_case(case, settings, model, *, knowledge_bundle=None):
     # No production store, refresh process, device or real web-tool calls.
     with TemporaryDirectory(prefix="entourage-eval-") as directory:
         settings = replace(settings, database_path=Path(directory) / "evaluation.sqlite3",
-                           device_timeout_seconds=1)
+                           device_timeout_seconds=1, knowledge_enabled=knowledge_bundle is not None)
+        if knowledge_bundle is not None:
+            from entourage_server.knowledge import publish_bundle
+            publish_bundle(knowledge_bundle, Path(knowledge_bundle) / "review.json",
+                           settings.database_path.parent / "vault/knowledge")
         store = ExecutionStore(settings.database_path)
         store.initialize()
         store.single_chat()

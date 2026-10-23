@@ -9,6 +9,16 @@ from entourage_server.gemini import Gemini
 
 
 class GeminiTests(unittest.IsolatedAsyncioTestCase):
+    async def test_finalization_removes_all_tools(self):
+        captured = []
+        def handle(request):
+            captured.append(json.loads(request.content))
+            return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {"content": "Evidence is incomplete."}}]})
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
+            reply = await Gemini(Settings(), client, api_key="synthetic").finalize([], lambda _: None)
+        self.assertEqual(captured[0]["tools"], [])
+        self.assertEqual(reply["content"], "Evidence is incomplete.")
+
     def test_production_configuration_and_missing_key(self):
         Settings(inference_provider="gemini", model="gemini-test")
         with self.assertRaisesRegex(ValueError, "API key"):

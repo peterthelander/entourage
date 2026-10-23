@@ -36,9 +36,12 @@ class Gemini:
                     call["function"]["arguments"] = json.dumps(args)
         return result
 
-    async def generate(self, messages, on_text):
+    async def finalize(self, messages, on_text):
+        return await self.generate(messages, on_text, tools_enabled=False)
+
+    async def generate(self, messages, on_text, *, tools_enabled=True):
         body = {"model": self.model, "messages": self.wire_messages(messages),
-                "tools": available_tools(self.settings), "stream": False,
+                "tools": available_tools(self.settings) if tools_enabled else [], "stream": False,
                 "max_tokens": self.settings.max_output_tokens, "reasoning_effort": self.reasoning_effort}
         async with asyncio.timeout(300):
             async with self.client.stream("POST", "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",

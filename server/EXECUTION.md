@@ -207,10 +207,14 @@ reported to the model as a tool failure rather than a fabricated reading.
 One worker processes turns sequentially, including while waiting for device input.
 An OS lock prevents two executing services from owning the same database. Run one
 uvicorn process without reload for actual tasks. Generation allows five minutes per
-model call, 2 MiB of upstream output, and four tool calls per turn. Context and
+model call, 2 MiB of upstream output, and four executed tool calls per turn. When
+the next batch would exceed that limit, one answer-only model pass can summarize
+the evidence already retrieved, with further tools disabled. Context and
 output token limits are configured at startup; see [configuration](README.md).
 History follows the [session selection policy](#start-python); failed turns,
-tool rows, and errors are excluded from prior-turn model history.
+tool rows, and errors are excluded from ordinary prior-turn model history.
+The opt-in reviewed-memory pilot retains bounded article/source evidence as
+described below.
 Current-turn tool results remain in the model context and are stored separately.
 
 SQLite schema version 2 adds device requests, credential hashes and checkpoints,
@@ -224,9 +228,56 @@ draft; Send creates a new turn with a new ID. Completed turns cannot be cancelle
 and repeating a cancellation is safe. Credential rotation and advanced checkpoint
 recovery remain future work.
 
-Checkpoints retain tool-loop state for inspection only. They are written around
-tool calls, not for every inference request, and are never replayed automatically.
-Changing retention, diagnostic coverage or recovery policy is separate work.
+Checkpoints retain tool-loop state for inspection, not automatic execution recovery.
+They are written around tool calls and before answer-only finalization. With
+reviewed memory enabled, matching article/source result pairs from the latest
+completed turn can be reused as context; no tool action is replayed.
+
+## Reviewed imported memory
+
+This opt-in pilot uses `ENTOURAGE_KNOWLEDGE_ENABLED=1` (default `0`). The launcher
+also accepts this key in ignored `server/data/inference.json`. Restart Python
+after changing the flag or service code. The active bundle pointer lives beside
+the configured database at `vault/knowledge/current.json`.
+
+`searchMemories` and `getMemoryInventory` return separate `conversation_memory`
+and `imported_memory` sections. Conversation filters retain their previous scope;
+imported search can return explicitly labeled partial word-overlap leads. Imported
+inventory covers at most 30 articles per page. `readKnowledgeArticle` and
+`readKnowledgeSource` require a snapshot from search/inventory; stale snapshots
+require another lookup. Source reads default to 1,200 characters, maximum 6,000.
+Unavailable/corrupt bundles are reported as unavailable rather than absent history.
+
+Publication is an explicit administrative operation, never a model tool:
+
+```powershell
+server/.venv/Scripts/python.exe ingestion/src/publish_memory.py --bundle <candidate-directory> --review <review.json> --knowledge-root server/data/vault/knowledge --bundle-id <new-unique-id>
+```
+
+The review object must contain `version: 1`, `status: "accepted"`, the exact
+candidate `snapshot`, `reviewer_kind` (`human` or `coding_agent`), a named
+`reviewer`, offset-aware `reviewed_at` and substantive `notes`. Advisory model
+triage cannot substitute for this review. This is a trusted local administrative
+contract, not cryptographic proof of reviewer identity or semantic correctness.
+The publisher preserves reviewed JSON bytes in a new bundle and atomically
+switches the pointer after validation; existing bundle IDs cannot be overwritten.
+Run a single publisher at a time. Use a knowledge root beside the custom database
+when applicable. The generated Markdown is an inspection view; editing it does
+not update authoritative records or articles.
+
+Imported journals remain under each bundle's `journals/`, separate from
+conversation `vault/journals/`. For immediate follow-ups, context may retain at most
+two complete single-call article/source result pairs, totaling at most 10,000
+serialized characters, from the latest completed turn. The checkpoint must be at
+most 256,000 characters and match the currently active snapshot. Session gaps and
+context budgets can remove this evidence. This is bounded context reuse, not a
+permanent cache or autonomous consolidation.
+
+To disable the pilot, set the flag to `0` and restart Python. To restore an older
+bundle, atomically restore its previously saved pointer; do not edit reviewed
+JSON. The small deployed pilot and evaluation limits are recorded in the
+[ingestion guide](../docs/memory-ingestion.md). Automatic synthesis/publication,
+full archive processing and incremental article updates remain future work.
 
 ## API additions and validation
 

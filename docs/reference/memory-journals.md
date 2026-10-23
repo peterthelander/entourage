@@ -118,5 +118,10 @@ real-Ollama smoke check (optional `--model`). It creates temporary synthetic
 journals and a temporary database, exercises the full worker/tool loop and removes
 them afterwards; personal chat history is untouched.
 Add `--overview` to test inventory plus date-based topic summarization.
-Next steps are improved retrieval and reviewed semantic articles; automatic
-dreaming remains deferred.
+With `ENTOURAGE_KNOWLEDGE_ENABLED=1`, search and inventory return separate
+`conversation_memory` and `imported_memory` sections. Reviewed imported articles
+and sources use string IDs and snapshot-bound reader tools; conversation message
+IDs remain numeric. Imported source journals live inside versioned bundles,
+separate from the conversation journals described here. See
+[publication, bounded follow-up context and rollback](../../server/EXECUTION.md#reviewed-imported-memory).
+Automatic dreaming and incremental article consolidation remain deferred.

@@ -23,10 +23,13 @@ class Settings:
     context_tokens: int = 8192
     max_output_tokens: int = 1536
     context_session_gap_minutes: int = 60
+    knowledge_enabled: bool = False
     gemini_api_key: str = field(default="", repr=False)
     web_search_model: str = "gemini-2.5-flash-lite"
 
     def __post_init__(self) -> None:
+        if type(self.knowledge_enabled) is not bool:
+            raise ValueError("knowledge_enabled must be a boolean.")
         if self.inference_provider not in ("ollama", "llama_cpp", "gemini"):
             raise ValueError("ENTOURAGE_INFERENCE_PROVIDER must be ollama, llama_cpp or gemini.")
         if not self.web_search_model or any(c not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._" for c in self.web_search_model):
@@ -65,6 +68,9 @@ class Settings:
 
     @classmethod
     def from_environment(cls) -> "Settings":
+        knowledge_flag = os.environ.get("ENTOURAGE_KNOWLEDGE_ENABLED", "0")
+        if knowledge_flag not in ("0", "1"):
+            raise ValueError("ENTOURAGE_KNOWLEDGE_ENABLED must be 0 or 1.")
         key = (os.environ.get("ENTOURAGE_GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY", "")).strip()
         key_file = Path(__file__).resolve().parents[1] / "data" / "gemini-api-key.txt"
         if not key and key_file.exists():
@@ -81,6 +87,7 @@ class Settings:
             max_output_tokens=int(os.environ.get("ENTOURAGE_MAX_OUTPUT_TOKENS", cls.max_output_tokens)),
             context_session_gap_minutes=int(os.environ.get(
                 "ENTOURAGE_CONTEXT_SESSION_GAP_MINUTES", cls.context_session_gap_minutes)),
+            knowledge_enabled=knowledge_flag == "1",
             database_path=Path(os.environ["ENTOURAGE_DATABASE_PATH"]) if os.environ.get("ENTOURAGE_DATABASE_PATH") else cls.database_path,
             execution_enabled=os.environ.get("ENTOURAGE_EXECUTION_ENABLED", "0") == "1",
             api_token=os.environ.get("ENTOURAGE_API_TOKEN", ""),

@@ -8,6 +8,16 @@ from entourage_server.llama_cpp import LlamaCpp
 
 
 class LlamaCppTests(unittest.IsolatedAsyncioTestCase):
+    async def test_finalization_removes_all_tools(self):
+        captured = []
+        def handle(request):
+            captured.append(json.loads(request.content))
+            return httpx.Response(200, text='data: {"choices":[{"delta":{"content":"Unknown from the evidence."},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n')
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
+            reply = await LlamaCpp(Settings(), client).finalize([], lambda _: None)
+        self.assertEqual(captured[0]["tools"], [])
+        self.assertEqual(reply["content"], "Unknown from the evidence.")
+
     async def test_fragmented_stream_tool_arguments_and_followup(self):
         captured = []
         events = [

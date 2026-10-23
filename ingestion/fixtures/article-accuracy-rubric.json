@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "review": "Manual semantic review required; no keyword score is a semantic pass.",
+  "partitions": {
+    "development": {
+      "records": "article-accuracy-development.jsonl",
+      "rubric": [
+        {
+          "record_id": "order-display",
+          "criterion": "Do not infer shipment or delivery from progress labels. Expected arrival may be reported as an estimate."
+        },
+        {
+          "record_id": "order-delivery-report",
+          "criterion": "Preserve explicitly reported delivery for Parcel B, without claiming Parcel A was delivered or the user collected it."
+        },
+        {
+          "record_id": "lantern-invitation",
+          "criterion": "Preserve a proposal; no user attendance, RSVP or occurrence is established."
+        },
+        {
+          "record_id": "clay-completion-report",
+          "criterion": "Preserve the reported completed event; do not infer user attendance or conflate with the lantern workshop."
+        },
+        {
+          "record_id": "conditional-feature",
+          "criterion": "Do not infer that the recipient uses Family Controls or manages another account."
+        },
+        {
+          "record_id": "explicit-feature",
+          "criterion": "Preserve the source-reported enabled state without treating all other portal accounts as enabled."
+        }
+      ]
+    },
+    "holdout": {
+      "records": "article-accuracy-holdout.jsonl",
+      "rubric": [
+        {
+          "record_id": "bike-proposal",
+          "criterion": "Do not infer acceptance or completed inspection."
+        },
+        {
+          "record_id": "bike-correction",
+          "criterion": "Keep the correction with the prior proposal; do not imply confirmation or work performed."
+        },
+        {
+          "record_id": "library-report",
+          "criterion": "Preserve the explicitly reported return without inferring who returned it."
+        },
+        {
+          "record_id": "fundraiser-options",
+          "criterion": "Do not infer pledge, payment or donation completion from interface options."
+        }
+      ]
+    }
+  }
+}

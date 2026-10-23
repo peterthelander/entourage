@@ -70,6 +70,51 @@ class ExecutionTests(unittest.TestCase):
             time.sleep(0.02)
         self.fail(f"Timed out waiting for {statuses}: {snapshot}")
 
+    def test_budget_exhaustion_finalizes_once_without_executing_extra_calls(self):
+        class LoopModel:
+            def __init__(self):
+                self.generated = 0
+                self.finalized = 0
+                self.final_messages = None
+
+            async def generate(self, messages, on_text):
+                self.generated += 1
+                return {"tool_calls": [{"id": f"call-{self.generated}", "type": "function", "function": {
+                    "name": "calculate", "arguments": {"operation": "add", "a": 1, "b": 2}}}]}
+
+            async def finalize(self, messages, on_text):
+                self.finalized += 1
+                self.final_messages = messages
+                return {"content": "The retrieved calculations each returned 3; no further calls were made."}
+
+        model = LoopModel()
+        with self.client(model) as client:
+            self.submit(client)
+            result = self.wait(client, {"completed", "failed"})
+            self.assertEqual(result["status"], "completed")
+            self.assertEqual(model.generated, 5)
+            self.assertEqual(model.finalized, 1)
+            self.assertEqual(len([m for m in model.final_messages if m["role"] == "tool"]), 4)
+            self.assertEqual(model.final_messages[-1]["role"], "system")
+            rows = client.get(f"/api/v1/conversations/{self.conversation}/messages").json()["items"]
+            self.assertEqual(len([m for m in rows if m["kind"] == "tool"]), 4)
+
+    def test_finalization_cannot_execute_another_tool(self):
+        class BadFinalizer:
+            async def generate(self, messages, on_text):
+                return {"tool_calls": [{"id": str(i), "function": {"name": "calculate", "arguments": {
+                    "operation": "add", "a": 1, "b": 2}}} for i in range(5)]}
+
+            async def finalize(self, messages, on_text):
+                return {"tool_calls": [{"function": {"name": "calculate", "arguments": {"operation": "add", "a": 1, "b": 2}}}]}
+
+        with self.client(BadFinalizer()) as client:
+            self.submit(client)
+            result = self.wait(client, {"completed", "failed"})
+            self.assertEqual(result["status"], "failed")
+            rows = client.get(f"/api/v1/conversations/{self.conversation}/messages").json()["items"]
+            self.assertFalse(any(m["kind"] == "tool" for m in rows))
+
     def test_entire_calculator_loop_finishes_without_polling_client_and_retries_do_not_repeat(self):
         with self.client() as client:
             self.submit(client)

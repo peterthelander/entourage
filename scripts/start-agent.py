@@ -23,7 +23,7 @@ def main():
         inference = json.loads(inference_file.read_text(encoding="utf-8"))
         allowed = {"ENTOURAGE_INFERENCE_PROVIDER", "ENTOURAGE_LLAMA_CPP_UPSTREAM",
                    "ENTOURAGE_OLLAMA_UPSTREAM", "ENTOURAGE_MODEL", "ENTOURAGE_CONTEXT_TOKENS",
-                   "ENTOURAGE_MAX_OUTPUT_TOKENS", "ENTOURAGE_CONTEXT_SESSION_GAP_MINUTES"}
+                   "ENTOURAGE_MAX_OUTPUT_TOKENS", "ENTOURAGE_CONTEXT_SESSION_GAP_MINUTES", "ENTOURAGE_KNOWLEDGE_ENABLED"}
         if not isinstance(inference, dict) or set(inference) - allowed:
             raise ValueError("Invalid keys in local inference.json.")
         for name, value in inference.items():

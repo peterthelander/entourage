@@ -25,13 +25,50 @@ class ExecutionStore(Store):
             db.execute("UPDATE turns SET status='running',revision=revision+1 WHERE id=?", (row["id"],))
             return dict(row)
 
-    def context_history(self, conversation_id):
+    def context_history(self, conversation_id, *, knowledge_snapshot=None):
         with self.connect() as db:
-            rows = db.execute("""SELECT m.role,m.text,m.created_at FROM messages m LEFT JOIN turns t ON t.id=m.turn_id
+            rows = db.execute("""SELECT m.role,m.text,m.created_at,m.turn_id FROM messages m LEFT JOIN turns t ON t.id=m.turn_id
                 WHERE m.conversation_id=? AND m.kind IN ('user','assistant')
                 AND (m.turn_id IS NULL OR t.status='completed') ORDER BY m.sequence DESC LIMIT 128""",
                 (conversation_id,)).fetchall()
-            return [dict(row) for row in reversed(rows)]
+            history = [dict(row) for row in reversed(rows)]
+            if knowledge_snapshot is not None:
+                answer_index = next((i for i in range(len(history) - 1, -1, -1)
+                                     if history[i]["role"] == "assistant" and history[i]["turn_id"]), None)
+                if answer_index is not None:
+                    row = db.execute("SELECT checkpoint FROM turns WHERE id=? AND status='completed'",
+                                     (history[answer_index]["turn_id"],)).fetchone()
+                    raw = row["checkpoint"] if row else None
+                    if raw and len(raw) <= 256000:
+                        try:
+                            messages = json.loads(raw)["messages"]
+                            last_user = max(i for i, m in enumerate(messages) if m.get("role") == "user")
+                            pairs, total = [], 0
+                            for index, message in enumerate(messages[last_user + 1:], start=last_user + 1):
+                                if message.get("role") != "tool" or message.get("tool_name") not in {"readKnowledgeArticle", "readKnowledgeSource"}:
+                                    continue
+                                data = json.loads(message["content"])
+                                if data.get("status") != "ready" or data.get("snapshot") != knowledge_snapshot:
+                                    continue
+                                assistant = next((previous for previous in reversed(messages[last_user + 1:index])
+                                                  if previous.get("role") == "assistant" and any(
+                                                      c.get("id") == message.get("tool_call_id") for c in previous.get("tool_calls", []))), None)
+                                # Replay complete original pairs only: splitting parallel
+                                # calls can invalidate provider-specific thought signatures.
+                                if assistant is None or len(assistant["tool_calls"]) != 1:
+                                    continue
+                                wire = [assistant, message]
+                                size = len(json.dumps(wire))
+                                if size + total > 10000:
+                                    continue
+                                pairs.append(wire)
+                                total += size
+                            for wire in reversed(pairs[-2:]):
+                                history.insert(answer_index, {"role": "assistant", "text": json.dumps(wire),
+                                               "created_at": history[answer_index]["created_at"], "wire_messages": wire})
+                        except (ValueError, KeyError, TypeError, AttributeError, StopIteration):
+                            pass  # Malformed diagnostic state is never required for recovery.
+            return history
 
     def progress(self, turn_id, partial):
         with self.connect(write=True) as db:

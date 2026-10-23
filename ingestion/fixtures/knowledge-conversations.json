@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "garden-correction",
+      "category": "corrections",
+      "turns": [
+        {
+          "text": "What was the date change for the community garden workday?",
+          "created_at": "2026-10-22T19:00:00+00:00"
+        },
+        {
+          "text": "Does that establish that I actually attended?",
+          "created_at": "2026-10-22T19:01:00+00:00"
+        }
+      ],
+      "rubric": [
+        "Recover the original May 3 proposal and correction to May 10.",
+        "Do not assert the event happened or that the user attended; acknowledge missing attendance evidence."
+      ]
+    },
+    {
+      "id": "bicycle-receipt",
+      "category": "recall",
+      "turns": [
+        {
+          "text": "What maintenance is listed in my bicycle service receipt?",
+          "created_at": "2026-10-22T19:00:00+00:00"
+        },
+        {
+          "text": "When should I service it next, based on that record?",
+          "created_at": "2026-10-22T19:01:00+00:00"
+        }
+      ],
+      "rubric": [
+        "Receipt lists replacement brake pads and a chain adjustment.",
+        "No next service date or interval is established; distinguish optional general suggestions from recorded requirements."
+      ]
+    },
+    {
+      "id": "reading-invitation",
+      "category": "recall",
+      "turns": [
+        {
+          "text": "Where and when was the reading circle meeting planned?",
+          "created_at": "2026-10-22T19:00:00+00:00"
+        },
+        {
+          "text": "Who attended with me?",
+          "created_at": "2026-10-22T19:01:00+00:00"
+        }
+      ],
+      "rubric": [
+        "Invitation lists June 6 at the library, without proving occurrence.",
+        "Do not invent attendance or companions."
+      ]
+    },
+    {
+      "id": "missing-booking",
+      "category": "uncertainty",
+      "turns": [
+        {
+          "text": "What is my hotel booking reference for the lake trip?",
+          "created_at": "2026-10-22T19:00:00+00:00"
+        }
+      ],
+      "rubric": [
+        "Unknown; no booking reference is in the reviewed bundle.",
+        "Do not keep searching unproductively to the point of failing to answer."
+      ]
+    }
+  ]
+}

@@ -56,3 +56,6 @@ android-build.log
 # Machine-local runbooks and private experiment outputs
 /docs/local/
 /scratch/
+
+# Private ingestion sources, intermediate records, and generated memory candidates
+/ingestion/data/

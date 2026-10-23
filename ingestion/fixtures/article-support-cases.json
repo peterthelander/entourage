@@ -1,0 +1,245 @@
+{
+  "version": 1,
+  "checks": [
+    {
+      "id": "status-is-not-delivery",
+      "kind": "source_statement",
+      "text": "Parcel A has been delivered.",
+      "record_ids": [
+        "order-display"
+      ],
+      "evidence": [
+        {
+          "record_id": "order-display",
+          "quote": "Delivered"
+        }
+      ],
+      "expected": "unsupported"
+    },
+    {
+      "id": "arrival-is-estimate",
+      "kind": "source_statement",
+      "text": "The notice estimates Parcel A will arrive Friday.",
+      "record_ids": [
+        "order-display"
+      ],
+      "evidence": [
+        {
+          "record_id": "order-display",
+          "quote": "Thanks for ordering Parcel A.\nOrder progress\nOrdered\nShipped\nOut for delivery\nDelivered\nExpected arrival: Friday."
+        }
+      ],
+      "expected": "supported"
+    },
+    {
+      "id": "explicit-delivery",
+      "kind": "source_statement",
+      "text": "The carrier notice reports Parcel B marked delivered on April 6 at 11:20.",
+      "record_ids": [
+        "order-delivery-report"
+      ],
+      "evidence": [
+        {
+          "record_id": "order-delivery-report",
+          "quote": "Carrier notification: Parcel B was marked delivered on April 6 at 11:20."
+        }
+      ],
+      "expected": "supported"
+    },
+    {
+      "id": "invite-is-not-attendance",
+      "kind": "source_statement",
+      "text": "The user attended the lantern workshop.",
+      "record_ids": [
+        "lantern-invitation"
+      ],
+      "evidence": [
+        {
+          "record_id": "lantern-invitation",
+          "quote": "We plan to hold the lantern workshop on May 8. Please RSVP if you would like to attend."
+        }
+      ],
+      "expected": "unsupported"
+    },
+    {
+      "id": "invite-is-plan",
+      "kind": "source_statement",
+      "text": "The invitation proposes a lantern workshop on May 8.",
+      "record_ids": [
+        "lantern-invitation"
+      ],
+      "evidence": [
+        {
+          "record_id": "lantern-invitation",
+          "quote": "We plan to hold the lantern workshop on May 8. Please RSVP if you would like to attend."
+        }
+      ],
+      "expected": "supported"
+    },
+    {
+      "id": "completion-report",
+      "kind": "source_statement",
+      "text": "The organizer reports the clay workshop took place on April 2.",
+      "record_ids": [
+        "clay-completion-report"
+      ],
+      "evidence": [
+        {
+          "record_id": "clay-completion-report",
+          "quote": "The organizer reports that the clay workshop took place on April 2. This email does not identify attendees."
+        }
+      ],
+      "expected": "supported"
+    },
+    {
+      "id": "no-named-attendee",
+      "kind": "source_statement",
+      "text": "The user attended the clay workshop on April 2.",
+      "record_ids": [
+        "clay-completion-report"
+      ],
+      "evidence": [
+        {
+          "record_id": "clay-completion-report",
+          "quote": "The organizer reports that the clay workshop took place on April 2. This email does not identify attendees."
+        }
+      ],
+      "expected": "unsupported"
+    },
+    {
+      "id": "conditional-feature-not-fact",
+      "kind": "source_statement",
+      "text": "The user manages another account with Family Controls.",
+      "record_ids": [
+        "conditional-feature"
+      ],
+      "evidence": [
+        {
+          "record_id": "conditional-feature",
+          "quote": "If you manage another account using Family Controls, review its settings after the update."
+        }
+      ],
+      "expected": "unsupported"
+    },
+    {
+      "id": "conditional-advice",
+      "kind": "source_statement",
+      "text": "The announcement advises reviewing settings if the recipient manages another account with Family Controls.",
+      "record_ids": [
+        "conditional-feature"
+      ],
+      "evidence": [
+        {
+          "record_id": "conditional-feature",
+          "quote": "If you manage another account using Family Controls, review its settings after the update."
+        }
+      ],
+      "expected": "supported"
+    },
+    {
+      "id": "explicit-dated-feature",
+      "kind": "source_statement",
+      "text": "The settings page reports Family Controls enabled as of April 6.",
+      "record_ids": [
+        "explicit-feature"
+      ],
+      "evidence": [
+        {
+          "record_id": "explicit-feature",
+          "quote": "Your account has Family Controls enabled. The settings page reports this as of April 6."
+        }
+      ],
+      "expected": "supported"
+    },
+    {
+      "id": "authentic-unrelated-citation",
+      "kind": "source_statement",
+      "text": "The carrier reports Parcel B delivered on April 6 at 11:20.",
+      "record_ids": [
+        "order-display"
+      ],
+      "evidence": [
+        {
+          "record_id": "order-display",
+          "quote": "Thanks for ordering Parcel A."
+        }
+      ],
+      "expected": "unsupported"
+    },
+    {
+      "id": "old-state-not-current",
+      "kind": "source_statement",
+      "text": "The account currently has Family Controls enabled.",
+      "record_ids": [
+        "explicit-feature"
+      ],
+      "evidence": [
+        {
+          "record_id": "explicit-feature",
+          "quote": "Your account has Family Controls enabled. The settings page reports this as of April 6."
+        }
+      ],
+      "expected": "unsupported"
+    },
+    {
+      "id": "proposal-not-service",
+      "kind": "source_statement",
+      "text": "The shop completed the bicycle inspection on June 10.",
+      "record_ids": [
+        "bike-correction"
+      ],
+      "evidence": [
+        {
+          "record_id": "bike-correction",
+          "quote": "Correction: our proposed inspection date is June 10, replacing June 3. We still need your acceptance."
+        }
+      ],
+      "expected": "unsupported"
+    },
+    {
+      "id": "correction-still-proposal",
+      "kind": "source_statement",
+      "text": "The shop moved its proposed inspection date to June 10 and still needs acceptance.",
+      "record_ids": [
+        "bike-correction"
+      ],
+      "evidence": [
+        {
+          "record_id": "bike-correction",
+          "quote": "Correction: our proposed inspection date is June 10, replacing June 3. We still need your acceptance."
+        }
+      ],
+      "expected": "supported"
+    },
+    {
+      "id": "reported-return",
+      "kind": "source_statement",
+      "text": "The library system reports the atlas returned on April 4.",
+      "record_ids": [
+        "library-report"
+      ],
+      "evidence": [
+        {
+          "record_id": "library-report",
+          "quote": "The library system records the atlas as returned on April 4."
+        }
+      ],
+      "expected": "supported"
+    },
+    {
+      "id": "menu-not-payment",
+      "kind": "source_statement",
+      "text": "The user completed a fundraiser payment.",
+      "record_ids": [
+        "fundraiser-options"
+      ],
+      "evidence": [
+        {
+          "record_id": "fundraiser-options",
+          "quote": "Payment complete"
+        }
+      ],
+      "expected": "unsupported"
+    }
+  ]
+}

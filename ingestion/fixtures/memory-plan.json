@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "articles": [
+    {
+      "slug": "community-garden",
+      "type": "concept",
+      "title": "Community garden",
+      "description": "Workday announcements and changes.",
+      "claims": [
+        {
+          "type": "source_statement",
+          "text": "The first invitation proposed May 3; a later correction moved the planned workday to May 10.",
+          "evidence": [
+            {
+              "record_id": "garden-invite",
+              "quote": "The garden workday is planned for May 3. Please bring gloves."
+            },
+            {
+              "record_id": "garden-correction",
+              "quote": "Correction: the garden workday has moved from May 3 to May 10."
+            }
+          ]
+        },
+        {
+          "type": "suggestion",
+          "text": "Check for later changes before planning attendance.",
+          "evidence": [
+            {
+              "record_id": "garden-correction",
+              "quote": "Correction: the garden workday has moved from May 3 to May 10."
+            }
+          ]
+        }
+      ],
+      "unknowns": [
+        "Attendance and whether the workday happened are not established."
+      ],
+      "links": []
+    },
+    {
+      "slug": "bicycle-maintenance",
+      "type": "concept",
+      "title": "Bicycle maintenance",
+      "description": "Documented service items.",
+      "claims": [
+        {
+          "type": "source_statement",
+          "text": "The receipt lists replacement brake pads and a chain adjustment.",
+          "evidence": [
+            {
+              "record_id": "bicycle-repair",
+              "quote": "The receipt lists replacement brake pads and a chain adjustment."
+            }
+          ]
+        }
+      ],
+      "unknowns": [
+        "The next service interval is not established."
+      ],
+      "links": []
+    },
+    {
+      "slug": "reading-circle-june-2025",
+      "type": "instance",
+      "title": "Reading circle June 2025",
+      "description": "A proposed meeting and preparation.",
+      "claims": [
+        {
+          "type": "source_statement",
+          "text": "An invitation lists June 6 at the library.",
+          "evidence": [
+            {
+              "record_id": "reading-circle",
+              "quote": "The reading circle invitation lists June 6 at the library. Bring a book suggestion."
+            }
+          ]
+        },
+        {
+          "type": "suggestion",
+          "text": "Choose a book suggestion to bring if attending.",
+          "evidence": [
+            {
+              "record_id": "reading-circle",
+              "quote": "The reading circle invitation lists June 6 at the library. Bring a book suggestion."
+            }
+          ]
+        }
+      ],
+      "unknowns": [
+        "Attendance and any later schedule changes are not established."
+      ],
+      "links": []
+    }
+  ]
+}

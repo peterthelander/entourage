@@ -46,6 +46,7 @@ Server-only configuration is read at startup:
 | `ENTOURAGE_CONTEXT_TOKENS` | `8192` | Application context budget; integer 2048–262144, subject to model/hardware limits; does not change hosted model context capacity |
 | `ENTOURAGE_MAX_OUTPUT_TOKENS` | `1536` | Maximum generated tokens per model call; positive, at most half the context window |
 | `ENTOURAGE_CONTEXT_SESSION_GAP_MINUTES` | `60` | Start fresh active context after a longer gap between user messages; integer 1–1440. Older conversations remain available through memory tools. |
+| `ENTOURAGE_KNOWLEDGE_ENABLED` | `0` | Set to `1` to include explicitly reviewed imported bundles in memory search/inventory and enable bounded article/source reads. See [publication and rollback](EXECUTION.md#reviewed-imported-memory). |
 | `ENTOURAGE_DATABASE_PATH` | `server/data/entourage.sqlite3` | SQLite file; default is anchored to the server directory, independent of working directory |
 
 Persistence-only mode makes no inference requests; the normal launcher enables
