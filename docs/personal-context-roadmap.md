@@ -1,6 +1,6 @@
 # Entourage: Personal Context & Memory Architecture Roadmap
 
-Status: Proposal with implemented milestones noted. Reviewed: October 22, 2026.
+Status: Proposal with implemented milestones noted. Reviewed: October 23, 2026.
 
 This document outlines the conceptual blueprint and technical strategy for implementing persistent, local-first memory in **Entourage**. The goal is to move beyond the artificial boundary of isolated chat threads, providing a unified, self-organizing knowledge base that operates transparently across personal devices.
 
@@ -16,9 +16,11 @@ is a design goal, not a guarantee that optional external tools send no data off-
 **Current architecture:** Python owns execution and memory operations. SQLite is
 authoritative for durable conversations/turns; Markdown is the readable memory
 layer. The first implemented milestone is deterministic daily-journal
-export with automatic refresh; see [journal behavior](reference/memory-journals.md). Semantic
-articles and dreaming below remain future work. Bounded keyword/date retrieval
-is now available through the Python `searchMemories` tool; the executing service
+export with automatic refresh; see [journal behavior](reference/memory-journals.md).
+Explicitly reviewed imported articles and recurring-event instances are now
+available. Autonomous article growth and dreaming below remain proposals.
+Bounded keyword/date retrieval is now available through the Python
+`searchMemories` tool; the executing service
 refreshes journals automatically and catches up on restart.
 Python also exposes inventory and paginated date-based reading so topic summaries
 can be grounded without keyword guesses. Stored summaries remain future work.
@@ -33,8 +35,9 @@ can be grounded without keyword guesses. Stored summaries remain future work.
 
 ## Guiding use case: planning the Chapin daddy-daughter ski trip
 
-Clarified by the user on October 22, 2026. This is a target experience, not a
-claim that the archive has been searched or that the information is available yet.
+Clarified by the user on October 22-23, 2026. A bounded, manually curated pilot
+now supports parts of this experience across three annual weekends. The complete
+archive, autonomous reconstruction and reliable planning remain unvalidated.
 
 The user should be able to say: "I'm getting ready to make plans for the Chapin
 daddy-daughter ski trip coming up. Can you review what happened in previous years
@@ -71,12 +74,16 @@ excluded records would be evidence to discuss, not permission to change the rule
 * **Lifespan:** Ephemeral. It operates transparently without requiring the user to manually manage or switch chat threads. Active context is currently selected by inactivity gap, not by midnight; older history remains available through memory tools.
 
 ### Layer 2: The Episodic Log (Daily Journals)
-* **What it is:** A comprehensive chronological record of what happened, what was discussed, and what actions were taken on a specific date (stored as `YYYY-MM-DD.md`).
+* **What it is:** A chronological projection of available source records and conversations (stored as `YYYY-MM-DD.md`). Current journals preserve what was recorded, not independently verified events; source dates can differ from activity dates, and coverage is bounded by ingestion.
 * **Design Principle:** Not optimized for byte-size conservation (disk space is cheap), but optimized for searchability, chronological querying, and historical fidelity.
 
 ### Layer 3: The Semantic Core (Living Concept Articles)
 * **What it is:** A Wikipedia-style collection of evergreen Markdown articles (`article-name.md`) tracking ongoing topics, projects, preferences, and recurring events (e.g., `daddy-daughter-ski-trip.md`).
 * **Design Principle:** Articles link to one another using standard wiki-style hyperlinks (`[[article-name]]`). They evolve dynamically as new information is ingested.
+
+Dynamic evolution is the proposed lifecycle. Current imported articles are
+explicitly reviewed snapshots in immutable bundles; autonomous growth, splitting
+and incremental updates are not implemented.
 
 ---
 
@@ -119,3 +126,25 @@ Initial [local-model article trials](experiments/2026-10-22-article-generation.m
 now exercise this contract on synthetic and real mixed-topic samples. They exposed
 format failures and unsupported completion claims. A separately reviewed candidate
 was rendered; no unedited model plan was accepted for live publication.
+
+## 6. Next validation milestone and scope limits
+
+The running code has no trip-specific rules. Trip names, providers and reviewed
+facts live in personal knowledge; private selectors and curation supplied the
+current example. User hints guided discovery, so these cases are development
+material rather than independent proof that the system can discover arbitrary
+memories. No model training or fine-tuning occurred.
+
+Freeze the implementation and test previously untouched real subjects using
+independently prepared expected findings. Evaluate discovery, extraction,
+membership, synthesis and final conversations separately; preserve the first
+results before making changes. See the
+[evaluation protocol](experiments/conversation-evaluations.md#memory-experiments-and-holdout-separation).
+
+The nearest reliability work is preserving source roles, years and uncertainty
+through follow-ups. Recent user feedback shows richer recall, but live checks
+still confused vehicle and ski-equipment rentals. A future hotel reservation
+does not establish a completed stay, a confirmed event schedule or present
+booking status. Limited coverage does not establish archive-wide absence.
+Automatic publication, incremental updates, dreaming, real financial adapters
+and attachment ingestion remain future work.

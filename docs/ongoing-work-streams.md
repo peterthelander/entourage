@@ -21,6 +21,12 @@ keyword checks and unblinded coding-agent review are useful but incomplete.
 Extend coverage to long histories, context pressure and journal refresh as those
 become the subject of experiments. Avoid tuning the system to a fixed test set.
 
+The recurring-event memory examples have now informed source curation, ranking
+and date presentation. Treat them as development/regression cases. No untouched
+real-topic holdout has yet been evaluated; independent expected findings and a
+frozen first run are the next validation boundary. See the
+[memory evaluation protocol](experiments/conversation-evaluations.md#memory-experiments-and-holdout-separation).
+
 Reference: [evaluation guide](experiments/conversation-evaluations.md).
 
 ## 2. Model comparisons and operating tradeoffs
@@ -56,10 +62,15 @@ Memory tools support source-message reads, speaker/order controls, pagination an
 date-based reading. Explicit numeric source IDs were retained after evaluation;
 other retrieval/prompt trials have not justified adoption.
 
-Next: trace repeated unsuccessful memory searches and four-call-limit failures.
-Test a coherent stopping/recovery change, including cases that genuinely require
-several useful calls. Compare local retrieval/tool choices with successful hosted
-traces. Check nearby conversation and uncertainty behavior before accepting fixes.
+Implemented since the initial comparison: unified conversation/import search,
+snapshot-bound article/source reads, bounded follow-up evidence and an answer-only
+finalization pass when the next batch would exceed four executed calls. The pass
+can still fail if a provider requests tools after they have been disabled.
+
+Next: trace remaining source-binding and stopping/recovery failures, including
+cases that genuinely require several useful calls. Compare local retrieval/tool
+choices with successful hosted traces. Check nearby conversation and uncertainty
+behavior before accepting fixes.
 The objective is a useful grounded answer or honest uncertainty, not merely more
 tool calls or better citation formatting.
 
@@ -97,15 +108,23 @@ changing the live model or adding automatic routing.
 
 As of October 23, an explicitly reviewed 33-source/nine-article expansion is
 published to the live Python service, with separate annual event histories and
-related lodging, transportation and purchase evidence. Unified search, snapshot-bound readers and
-bounded follow-up evidence are implemented. See the
-[integration experiment](experiments/2026-10-23-reviewed-memory-integration.md).
+related lodging, transportation and purchase evidence. Unified search,
+snapshot-bound readers and bounded follow-up evidence are implemented. See the
+[recurring-event experiment](experiments/2026-10-23-recurring-event-reconstruction.md).
 The batch runner still produces unpublished candidates; automatic acceptance,
 incremental updates and full-archive ingestion remain future work.
 
-Next: use evidence from recall evaluations and everyday use to decide whether the
-next useful step is better retrieval, context assembly, indexing or consolidation.
-Do not assume a new memory layer is needed before diagnosing the current failures.
+The service/reusable code is generic; the published history was assembled with
+topic-specific discovery, user hints and coding-agent curation. This demonstrates
+useful retrieval over reviewed knowledge, not independent automatic reconstruction.
+User feedback reports a richer three-year summary, while controlled/live checks
+still show car-versus-ski-rental confusion, mixed years and current-status claims.
+
+Next: freeze the current implementation for an untouched-topic evaluation, score
+ingestion stages separately from answering, and diagnose source binding in
+follow-ups. Preserve the current cases as regressions. Larger-corpus ingestion,
+real transaction adapters, attachments and consolidation follow bounded evidence
+of their usefulness; they are not implemented by the fictional transaction test.
 
 Reference: [personal context and memory roadmap](personal-context-roadmap.md).
 
@@ -123,8 +142,8 @@ Record improvements, regressions and inconclusive outcomes before deciding what
 to keep. A change without a score gain can still be justified by a demonstrated
 benefit such as maintainability; record that reason explicitly.
 
-The immediate proposed focus is search stopping/recovery, supported by the
-existing comparison. Evaluation coverage and everyday feedback should continue
-alongside it. Update this overview when priorities or implementation status change;
-keep machine configuration in the local runbook and detailed results in linked
-experiment records.
+The immediate proposed focus is independent memory validation and faithful use
+of retrieved sources, alongside remaining search stopping/recovery failures.
+Evaluation coverage and everyday feedback should continue together. Update this
+overview when priorities or implementation status change. Keep machine configuration
+in the local runbook and detailed results in linked experiment records.

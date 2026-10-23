@@ -160,3 +160,29 @@ existing hosted provider; the archive itself was not uploaded.
 Verification: 121 server tests, 45 ingestion tests, lint and TypeScript checking
 passed. Reusable code and fictional fixtures are committed separately from private
 catalogs, source data, reviews, reports, generated journals and machine settings.
+
+## Session feedback and separation audit
+
+The user's subsequent agent test produced a richer summary of three yearly
+weekends with lodging, car and mountain bookings, and identified the documented
+equipment-rental year. Only the ending excerpt was supplied; the full answer and
+tool trace were not inspected. Treat this as encouraging everyday feedback, not
+an independently scored pass. Its future-year wording still needed qualification:
+a reservation is not a completed hotel stay, confirmed school-event schedule or
+present-status check; bounded missing evidence is not archive-wide absence.
+
+An audit found no trip/travel-provider-specific memory rules in the service or reusable
+catalog, selector and event-link code. The retained `find_ski_trip.py` is explicitly
+an exploratory topic-specific script and is not imported by production. Private
+search rules, user-provided leads and coding-agent curation were topic-specific;
+accepted articles intentionally contain personal topic facts. Production retrieves
+those reviewed articles, not raw mailboxes, this coding chat or experiment reports.
+
+The current demonstration is therefore retrieval over hand-curated knowledge.
+It is not independent automatic reconstruction. These cases informed curation,
+ranking and date presentation and are now development/regression examples. The
+same coding agent reviewed sources and answers; independent human review and an
+untouched real-topic holdout have not occurred. The fictional conference fixture
+checks generic mechanics only. See the proposed
+[holdout protocol](conversation-evaluations.md#memory-experiments-and-holdout-separation)
+before claiming general ingestion or answer-quality gains.

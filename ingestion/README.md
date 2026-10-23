@@ -9,6 +9,14 @@ MBOX mail, calendars and contacts. The Python service remains the owner of live
 agent memory. Batch experiments produce unpublished candidates. Only the separate administrative
 publisher activates an explicitly reviewed bundle in the service knowledge store.
 
+The current recurring-event history was assembled with topic-guided discovery and
+coding-agent curation, using user hints. It was not independently reconstructed by
+the batch runner. The reusable code is generic; the retained `find_ski_trip.py`
+is an exploratory topic-specific script outside the production import path.
+Current trip cases are development/regression examples. See the
+[evaluation separation protocol](../docs/experiments/conversation-evaluations.md#memory-experiments-and-holdout-separation)
+for the next untouched-topic validation milestone.
+
 ## Layout
 
 - `src/`: reusable parsing, filtering and batch-processing code as it is developed.

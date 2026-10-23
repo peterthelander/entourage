@@ -1,6 +1,7 @@
 # Conversation evaluation suite
 
-Status: Implemented evaluation harness; model quality remains under evaluation. October 21, 2026.
+Status: Implemented evaluation harness; model quality remains under evaluation.
+Updated: October 23, 2026 (initial guide October 21).
 
 See the [initial repeated baseline](2026-10-21-conversation-baseline.md) for
 observed retrieval and unsupported-event-selection failures.
@@ -109,3 +110,55 @@ self-rating or a keyword match into a factuality guarantee. A scripted-model
 harness test establishes execution and scoring behavior, not local-model quality.
 Use repeated live runs before accepting a behavioral improvement, and retain
 nearby successful cases when investigating a failure.
+
+## Memory experiments and holdout separation
+
+The [recurring-event pilot](2026-10-23-recurring-event-reconstruction.md) separates
+generic service code, private experiment inputs and published personal knowledge.
+It does not yet separate development from independent real-topic validation.
+User hints guided discovery; a coding agent selected records, reviewed observations
+and links, authored/refined articles and evaluated answers. The same trip questions
+informed retrieval/date changes. Those cases are development/regression material,
+not a holdout. Fictional unrelated fixtures test mechanics, not real-corpus
+generalization. No model weights were trained or fine-tuned.
+
+The next validation protocol is proposed, not yet executed:
+
+1. Freeze the implementation, prompts, inference settings and evaluation rubric;
+   record code/configuration identities without credentials. For a retrieval-only
+   check, also freeze the reviewed source bundle. For an ingestion check, freeze
+   raw inputs and the acceptance procedure before producing candidates.
+2. Choose previously untouched real topics, including multiple event instances,
+   unrelated records, missing evidence and corrections. An independent reviewer
+   should prepare expected findings and acceptable uncertainty from original
+   sources before the developer sees model answers. Record any user hints.
+3. Score stages separately: source discovery, observation/date extraction, event
+   membership, article synthesis and conversational use. Label supplied manual
+   annotations explicitly so they do not count as automatic extraction success.
+4. Preserve every planned run, failure and partial result. Keep first-run findings
+   separate from results after interventions; do not report repeated tuning against
+   the same cases as an independent validation gain.
+5. Once a case informs code, prompts, source selection or article curation, move it
+   into development/regression and choose a fresh holdout for the next claim.
+
+Sources used to answer a question are legitimate retrieval inputs. Leakage arises
+when expected answers or unsupported developer knowledge enter source curation,
+prompts, special-case code or scoring without being declared. Topic-specific
+published facts are expected personal data; topic-specific service behavior is
+not the intended architecture. Accurate hand-curated articles establish neither
+automatic ingestion quality nor model-wide generalization.
+
+`scripts/evaluate-knowledge.py` publishes the supplied reviewed bundle only inside
+each temporary evaluation store. It can send selected private evidence to hosted
+inference when explicitly selected; the synthetic-only assurances above describe
+the base conversation runner's normal fixtures. These isolated stores do not read
+or modify live chat. Live smoke checks instead create service-verification
+conversations excluded from shared-chat consolidation; they do write verification
+history. Ordinary user interactions remain production history, with assistant
+answers treated as secondary evidence rather than accepted imported facts.
+
+Source acceptance and answer scoring are separate decisions. A fabricated answer
+must not be promoted into imported knowledge to make a later test pass. Preserve
+the exact reviewed source snapshot, original provenance, and contradictory/missing
+evidence. A stronger model can expose differences in source use but is not an
+independent ground-truth author or reviewer merely by being stronger.

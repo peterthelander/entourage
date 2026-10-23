@@ -9,7 +9,27 @@ compact index. The [memory roadmap](personal-context-roadmap.md) describes the
 intended experience. The ski-trip example is an evaluation case, not a subject
 embedded in the pipeline.
 
-## Current pipeline
+## Current state and ownership
+
+The deployed pilot has 33 reviewed source records and nine articles. It supports
+retrieval of curated personal history, including three recurring-event instances;
+it does not autonomously reconstruct that history from the raw archive. No model
+weights were trained or fine-tuned.
+
+| Layer | Implemented boundary | Remaining qualification |
+| --- | --- | --- |
+| Running service | Generic validation, search, source/article readers, dates, series links and explicit publication | No school, ski-trip or travel-provider-specific memory rules; answer faithfulness remains inconsistent |
+| Reusable ingestion | Bounded catalogs, normalization, configurable lead selection and event-link suggestions | Observation extraction and membership require semantic review |
+| Experiment inputs | Private topic selectors, user-provided leads and coding-agent curation | The chosen topic and expected answers influenced development |
+| Published knowledge | Explicitly accepted source-grounded records and articles | Topic-specific knowledge is intentional data, not proof of generic automatic synthesis |
+| Evaluation | Isolated offline stores and separately recorded live verification | Current trip cases are development/regression cases, not untouched validation |
+
+The service does not read this coding conversation, documentation or experiment
+reports as personal memory. Reviewed imports enter through explicit publication.
+The exploratory `ingestion/src/find_ski_trip.py` is topic-specific and is not
+imported by production; keep it distinct from the reusable ingestion path.
+
+## Bounded batch-candidate pipeline
 
 1. **Read and filter.** Stream a bounded prefix of each MBOX, excluding the exact
    Gmail label `Category Promotions`. Preserve originals and log every complete
@@ -43,6 +63,11 @@ embedded in the pipeline.
 The pipeline creates detailed reports and hashes, has explicit failure states, and
 refuses to reuse an output directory. It is not yet resumable. A successful run
 means processing completed, not that the content was approved.
+
+This wrapper's seeded three-record sample is separate from the recurring-event
+experiment. The latter used topic-guided discovery followed by coding-agent
+selection, extraction, article writing and review. Its published 33-record bundle
+was not generated automatically by the batch pipeline.
 
 ## Run a bounded pilot
 
@@ -145,13 +170,29 @@ status. Bank/card adapters and automatic observation extraction are not implemen
 
 ## Next implementation boundary
 
-Keep generation, support triage and publication separate. Broaden semantic review
-of actual planning/recall conversations across topics, including follow-ups and
-unknowns. Use a stronger model as a diagnostic reference, not proof of correctness.
+The next milestone is a frozen evaluation on previously untouched real topics.
+Use independently prepared source-backed expected findings, retain the first
+results and failures, and move a case into development/regression once it informs
+a change. The existing trip examples and fictional fixtures do not establish
+generalization. Follow the [memory evaluation protocol](experiments/conversation-evaluations.md#memory-experiments-and-holdout-separation).
+
+Prioritize source binding across follow-ups: vehicle rental versus equipment
+rental, source timestamp versus activity date, reservation versus current status,
+and selected coverage versus archive-wide absence. Preserve both failures and
+nearby successes. A stronger model is a diagnostic reference, not ground truth.
+
+Evaluate discovery, observation extraction, event membership, article synthesis
+and conversational use separately. Accurate hand-curated memory can validate
+retrieval while concealing weaknesses in automatic ingestion. Keep generation,
+support triage and publication separate; model agreement is not acceptance.
 
 Python now owns accepted source records, article revisions and indexes alongside
 its existing conversation history. Incremental article updates, organic splitting,
 larger reviewed coverage and background consolidation remain future work.
+Real bank/card adapters and attachment extraction should follow a small reviewed
+source-format experiment, not be inferred from the existing email receipts or
+fictional transaction fixture. Scaling the archive is not a prerequisite for the
+next independent validation.
 
 ## Read-only candidate preview
 
