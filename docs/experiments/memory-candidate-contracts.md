@@ -1,8 +1,7 @@
 # Generic memory candidate contracts
 
-Status: Version 1 experimental contracts and deterministic renderer implemented;
-a bounded mail adapter is now available; model synthesis and live memory integration remain future work.
-Date: October 22, 2026.
+Status: Version 1 contracts, deterministic renderer and explicit reviewed service integration implemented; automatic synthesis/publication remains experimental.
+Updated: October 23, 2026 (initial contract October 22).
 
 ## Purpose and boundaries
 
@@ -10,8 +9,10 @@ Implement the [memory roadmap](../personal-context-roadmap.md) with a small comm
 record envelope, readable chronological evidence, living concept articles and
 event/project instance articles. Topic names and relationships are data. No ski-trip
 matching, fixed subject taxonomy or topic-specific code belongs in this renderer.
-The experiment lives in `ingestion/src/memory_candidates.py`; Python's standard
-library is sufficient. The service continues to own live memory.
+The ingestion CLI is `ingestion/src/memory_candidates.py`; shared validation and
+rendering live in `server/entourage_server/knowledge_contracts.py` and
+`knowledge_documents.py`. Python's standard library is sufficient. The service
+owns live memory.
 
 ## Source records: JSONL version 1
 
@@ -56,6 +57,16 @@ alone is not proof of source integrity.
 The renderer consumes a separate reviewed plan with `version: 1` and an `articles`
 list. This preserves the boundary between evidence and editorial/model decisions.
 Each article contains:
+
+Instances can additionally carry an `activity_period` object with ISO
+`start_date`/`end_date` and a `series_slug` naming an existing concept article.
+Activity dates require semantic review of source evidence; syntax validation
+checks ordering, not truth. They do not assert completion. An email sent in one
+year can describe an activity in another; its source journal stays on the source
+timestamp's day. The deterministic views and retrieval preserve both dates.
+The current generation schema does not automatically produce these optional
+fields; extraction/curation supplies them before review. Advisory support triage
+includes the activity period when present.
 
 - `slug`, `title`, `description`: safe filename stem, human title and short index entry.
 - `type`: `concept` for a continuing subject, or `instance` for an event/project occurrence.

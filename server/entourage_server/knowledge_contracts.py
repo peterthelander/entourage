@@ -53,6 +53,16 @@ def validate_plan(plan, records):
         require(slug not in slugs, "duplicate article slug")
         slugs.add(slug)
         require(article.get("type") in ("concept", "instance"), "invalid article type")
+        if "activity_period" in article:
+            period = article["activity_period"]
+            require(article["type"] == "instance" and isinstance(period, dict)
+                    and set(period) == {"start_date", "end_date"}, "invalid activity period")
+            for value in period.values():
+                require(isinstance(value, str) and date.fromisoformat(value).isoformat() == value, "invalid activity date")
+            require(period["start_date"] <= period["end_date"], "reversed activity period")
+        if "series_slug" in article:
+            require(article["type"] == "instance" and isinstance(article["series_slug"], str)
+                    and SLUG.fullmatch(article["series_slug"]), "invalid series reference")
         for field in ("title", "description"):
             require(nonempty(article.get(field)) and "\n" not in article[field] and "\r" not in article[field], f"invalid {field}")
         require(isinstance(article.get("claims"), list), "claims must be a list")
@@ -69,4 +79,7 @@ def validate_plan(plan, records):
             require(isinstance(article.get(field), list) and all(nonempty(x) for x in article[field]), f"invalid {field}")
     for article in articles:
         require(all(link in slugs for link in article["links"]), "unknown article link")
+        if "series_slug" in article:
+            require(any(a["slug"] == article["series_slug"] and a["type"] == "concept" for a in articles),
+                    "series reference must name a concept article")
     return articles

@@ -106,7 +106,7 @@ To resolve user queries without bloating the active prompt context:
 
 1. **Daily journals (implemented):** Python exports shared-chat records into ignored `server/data/vault/journals/`. Entries preserve source references; execution-enabled services refresh them automatically and catch up on restart. Model summarization remains future work.
 2. **Retrieval (implemented baseline):** Python `searchMemories` returns bounded literal keyword/date matches with dated excerpts and source references. Automatic refresh retries failures and catches up after restart. Literal matching and small-model tool selection remain limitations.
-3. **Reviewed imported articles (small pilot implemented October 23, 2026):** Python owns explicit reviewed-bundle publication and bounded article/source tools. Unified memory search covers conversation journals and imports separately. Five reviewed sources/articles are live; this is not full-archive ingestion. Incremental updates and autonomous refactoring remain future work.
+3. **Reviewed imported articles (small pilot implemented October 23, 2026):** Python owns explicit reviewed-bundle publication and bounded article/source tools. Unified memory search covers conversation journals and imports separately. The October 23 expansion has 33 reviewed sources and nine articles, including separate annual instances with activity periods and series links; this is not full-archive ingestion. Incremental updates and autonomous refactoring remain future work.
 
 An isolated [generic candidate prototype](experiments/memory-candidate-contracts.md)
 now defines versioned source records and reviewed article plans, rendering imported

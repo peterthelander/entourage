@@ -34,6 +34,9 @@ async def run(args):
               "fixture_sha256": hashlib.sha256(args.fixture.read_bytes()).hexdigest(),
               "production_worker_sha256": hashlib.sha256((ROOT / "server/entourage_server/agent.py").read_bytes()).hexdigest(),
               "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+              "service_code_sha256": {name: hashlib.sha256((ROOT / "server/entourage_server" / name).read_bytes()).hexdigest()
+                                      for name in ("agent.py", "execution_store.py", "knowledge.py", "knowledge_bundle.py",
+                                                   "knowledge_contracts.py", "config.py", "llama_cpp.py", "gemini.py")},
               "scope": "Production worker and tools with isolated databases; no live chat, real device or web calls",
               "semantic_review": "pending", "runs": []}
     def save():

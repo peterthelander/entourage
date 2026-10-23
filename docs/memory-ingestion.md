@@ -89,8 +89,9 @@ category exclusion or durable-memory relevance policy has been selected.
 
 ## Reviewed live pilot
 
-Five reviewed source records and five articles are now published in
-`server/data/vault/knowledge/bundles/personal-pilot-20261022/`. The active pointer
+The current expansion contains 33 reviewed source records and nine articles in
+`server/data/vault/knowledge/bundles/recurring-events-20261023/`. The original
+five-source pilot remains as an older immutable bundle. The active pointer
 is `server/data/vault/knowledge/current.json`; the machine's ignored inference
 configuration enables `ENTOURAGE_KNOWLEDGE_ENABLED=1`. This remains opt-in by
 default. Original mailbox byte hashes were checked for the selected records.
@@ -110,15 +111,37 @@ immediate follow-ups, with stale snapshots excluded. Imported journals stay
 separate from conversation journals. The four executed-tool-call limit remains;
 a final answer-only model pass can summarize evidence when that budget is spent.
 
-The live API inventory and a two-turn ski planning conversation completed: the
+The original five-source pilot passed a live API inventory and two-turn ski planning conversation: the
 agent recovered historical dinner details and correctly said attendance, payment
 and lodging were unknown. This demonstrates access to the small reviewed bundle,
 not reliable recall across the full archives. Final local comparisons completed
 all eight synthetic and six personal case runs; hosted comparisons completed six
 of eight synthetic and all six personal runs. Completion is not a semantic pass:
 unsupported general advice and occasional present-state wording remain issues.
-No automatic hosted routing was added. Server tests (121), ingestion tests (34),
-lint and TypeScript checking passed during integration.
+The subsequent [recurring-event expansion](experiments/2026-10-23-recurring-event-reconstruction.md)
+adds separate annual histories and related travel/purchase evidence, with explicit
+activity periods and series references. Live inventory retrieval passed, but a
+live follow-up confused car rentals with ski-equipment rentals. Source records
+remain correct; broader local-model answer reliability is unresolved. No automatic
+hosted routing was added. Server tests (121), ingestion tests (45), lint and
+TypeScript checking passed during integration.
+
+## Recurring-event discovery
+
+A bounded header catalog can locate older reservations without decoding the entire
+archive. Private literal rules select candidate travel/event records, including
+messages sent well before activity dates. A reviewed observation layer separates
+activity ranges, places, references and source status from message timestamps.
+Generic linking proposes event membership; every link still requires semantic
+review before an annual article is published. Date-only matches stay weak, and
+reference/date conflicts remain explicit. See the
+[commands and fictional conference/transaction fixture](../ingestion/README.md#discover-recurring-events-beyond-topic-keywords).
+
+Instance articles can carry a reviewed `activity_period` and `series_slug`.
+Source journals retain original observation dates. The current pilot includes
+three yearly weekend instances and a separate future lodging reservation; a hotel
+reservation does not confirm a future school-event schedule or present booking
+status. Bank/card adapters and automatic observation extraction are not implemented.
 
 ## Next implementation boundary
 

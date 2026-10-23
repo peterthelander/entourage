@@ -44,6 +44,11 @@ def plan_checks(records, plan):
         for field in ("title", "description"):
             checks.append({"id": f"{article['slug']}-{field}", "kind": field,
                            "text": article[field], "record_ids": ids})
+        if "activity_period" in article:
+            period = article["activity_period"]
+            checks.append({"id": f"{article['slug']}-activity-period", "kind": "activity_period",
+                           "text": f"The associated activity dates are {period['start_date']} through {period['end_date']}; this does not assert completion.",
+                           "record_ids": ids})
         for i, claim in enumerate(article["claims"]):
             checks.append({"id": f"{article['slug']}-claim-{i}", "kind": claim["type"],
                            "text": claim["text"], "evidence": claim["evidence"],

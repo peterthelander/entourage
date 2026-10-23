@@ -95,8 +95,9 @@ still found unsupported and stale claims. Outputs are unpublished; model agreeme
 is not approval. A stronger reference reviewer helped on synthetic cases without
 changing the live model or adding automatic routing.
 
-As of October 23, a separate explicitly reviewed five-source/article bundle is
-published to the live Python service. Unified search, snapshot-bound readers and
+As of October 23, an explicitly reviewed 33-source/nine-article expansion is
+published to the live Python service, with separate annual event histories and
+related lodging, transportation and purchase evidence. Unified search, snapshot-bound readers and
 bounded follow-up evidence are implemented. See the
 [integration experiment](experiments/2026-10-23-reviewed-memory-integration.md).
 The batch runner still produces unpublished candidates; automatic acceptance,

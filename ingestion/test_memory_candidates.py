@@ -39,6 +39,23 @@ class MemoryCandidateTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     render(self.records, plan)
 
+    def test_instance_activity_dates_are_separate_from_source_journal_dates(self):
+        instance = next(a for a in self.plan["articles"] if a["type"] == "instance")
+        series = {**copy.deepcopy(instance), "slug": "reading-circle", "type": "concept", "links": []}
+        self.plan["articles"].append(series)
+        instance["activity_period"] = {"start_date": "2025-06-06", "end_date": "2025-06-06"}
+        instance["series_slug"] = series["slug"]
+        files = render(self.records, self.plan)
+        self.assertIn("Activity period: 2025-06-06", files[f"articles/{instance['slug']}.md"])
+        self.assertNotIn("journals/2025-06-06.md", files)
+        instance["activity_period"]["end_date"] = "2025-06-05"
+        with self.assertRaises(ValueError):
+            render(self.records, self.plan)
+        instance["activity_period"]["end_date"] = "2025-06-06"
+        instance["series_slug"] = "missing-series"
+        with self.assertRaises(ValueError):
+            render(self.records, self.plan)
+
     def test_path_escape_broken_links_and_duplicate_ids_rejected(self):
         for field, value in (("slug", "../../live-vault"), ("links", ["missing"])):
             plan = copy.deepcopy(self.plan)

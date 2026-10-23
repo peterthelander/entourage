@@ -3,6 +3,7 @@
 import hashlib
 import json
 import re
+from copy import deepcopy
 from pathlib import Path
 
 from .knowledge_contracts import validate_plan, validate_records
@@ -50,7 +51,8 @@ class KnowledgeBundle:
                 if all(term in text.casefold() for term in terms):
                     ids = sorted({e["record_id"] for c in article["claims"] for e in c["evidence"]})
                     matches.append({"slug": slug, "title": article["title"], "description": article["description"],
-                                    "source_ids": ids, "source_timestamps": {i: self.records[i]["observed_at"] for i in ids}})
+                                    "source_ids": ids, "source_timestamps": {i: self.records[i]["observed_at"] for i in ids},
+                                    **({"activity_period": article["activity_period"]} if "activity_period" in article else {})})
         else:
             for identity, record in sorted(self.records.items()):
                 if all(term in (record["title"] + "\n" + record["text"]).casefold() for term in terms):
@@ -63,7 +65,12 @@ class KnowledgeBundle:
     def read_article(self, slug):
         if slug not in self.articles:
             raise ValueError("Unknown article slug")
-        article = self.articles[slug]
+        article = deepcopy(self.articles[slug])
+        # Keep the record timestamp next to its excerpt. A separate ID/date map
+        # is easy to misassociate when one claim cites both a booking and receipt.
+        for claim in article["claims"]:
+            for evidence in claim["evidence"]:
+                evidence["observed_at"] = self.records[evidence["record_id"]]["observed_at"]
         ids = sorted({e["record_id"] for c in article["claims"] for e in c["evidence"]})
         result = self.envelope(article=article, source_timestamps={i: self.records[i]["observed_at"] for i in ids})
         if len(json.dumps(result).encode()) > 64000:
@@ -79,10 +86,12 @@ class KnowledgeBundle:
         ranked = []
         for identity, item in sorted((self.articles if scope == "articles" else self.records).items()):
             if scope == "articles":
-                text = "\n".join([item["title"], item["description"], *(c["text"] for c in item["claims"]), *item["unknowns"]])
+                main_text = "\n".join([item["description"], *(c["text"] for c in item["claims"])])
+                text = "\n".join([item["title"], main_text, *item["unknowns"]])
                 ids = sorted({e["record_id"] for c in item["claims"] for e in c["evidence"]})
                 result = {"slug": identity, "title": item["title"], "description": item["description"],
-                          "source_ids": ids, "source_timestamps": {i: self.records[i]["observed_at"] for i in ids}}
+                          "source_ids": ids, "source_timestamps": {i: self.records[i]["observed_at"] for i in ids},
+                          **({"activity_period": item["activity_period"]} if "activity_period" in item else {})}
             else:
                 text = item["title"] + "\n" + item["text"]
                 result = {"record_id": identity, "title": item["title"], "observed_at": item["observed_at"],
@@ -91,11 +100,19 @@ class KnowledgeBundle:
             matched = [token for token in tokens if token in words]
             if matched:
                 result.update(matched_tokens=matched, missing_tokens=[t for t in tokens if t not in matched])
-                ranked.append((len(matched), identity, result))
-        ranked.sort(key=lambda row: (-row[0], row[1]))
+                if scope == "articles":
+                    title_words = set(re.findall(r"\w+", item["title"].casefold()))
+                    main_words = title_words | set(re.findall(r"\w+", main_text.casefold()))
+                    unknown_only = [t for t in matched if t not in main_words]
+                    result["unknown_only_tokens"] = unknown_only
+                    score = sum(3 if t in title_words else 2 if t in main_words else 1 for t in matched)
+                else:
+                    score = len(matched)
+                ranked.append((score, len(matched), identity, result))
+        ranked.sort(key=lambda row: (-row[0], -row[1], row[2]))
         return self.envelope(scope=scope, match_mode="ranked_partial", total_matches=len(ranked),
-                             results=[r[2] for r in ranked[:limit]], truncated=len(ranked) > limit,
-                             retrieval_guidance="Possible leads ranked by literal word overlap, not semantic or complete matches. Read evidence before answering; missing query terms are not established.")
+                             results=[r[3] for r in ranked[:limit]], truncated=len(ranked) > limit,
+                             retrieval_guidance="Possible leads ranked by literal word overlap, prioritizing titles and claims over unknowns. Unknown-only hits describe gaps, not positive evidence. These are not semantic or complete matches. Read evidence before answering; missing query terms are not established.")
 
     def read_source(self, identity, *, offset=0, limit=1200, snapshot=None):
         if (snapshot is not None and snapshot != self.snapshot) or (offset and snapshot != self.snapshot):

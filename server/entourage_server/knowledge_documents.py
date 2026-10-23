@@ -44,6 +44,11 @@ def render(records, plan, *, accepted=False):
                  f"Type: {article['type']}", "", f"Source timestamps: {timeframe}", "",
                  "Statements below describe dated source evidence; present-day state has not been verified.", "",
                  article["description"], ""]
+        if "activity_period" in article:
+            period = article["activity_period"]
+            lines += [f"Activity period: {period['start_date']} to {period['end_date']} (associated activity dates, not source timestamps or proof of completion).", ""]
+        if "series_slug" in article:
+            lines += [f"Series: [{article['series_slug']}]({article['series_slug']}.md)", ""]
         for kind, heading in (("source_statement", "Source statements"), ("inference", "Interpretations"), ("suggestion", "Suggested next steps")):
             lines += [f"## {heading}", ""]
             for claim in article["claims"]:

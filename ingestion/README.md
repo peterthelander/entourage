@@ -197,3 +197,56 @@ and literal assertions are mechanical checks, not semantic accuracy scores.
 service by creating a service-verification conversation and a device registration;
 it does not add the exchange to shared-chat consolidation. This live check writes
 verification history and runs inference.
+
+## Discover recurring events beyond topic keywords
+
+`src/catalog_mail.py` builds a private streaming header catalog from bounded MBOX
+prefixes. It copies no bodies and records source size/mtime, complete byte coverage,
+dates, labels and Promotions exclusions. A trailing partial message is omitted.
+Dates are header observations, not event dates; minimum/maximum timestamps do not
+prove complete calendar coverage. Standard MBOX escaping is required. Sources must
+remain unchanged. Outputs require fresh directories; full-run resume/checkpoint
+orchestration remains future work.
+
+```powershell
+server/.venv/Scripts/python.exe ingestion/src/catalog_mail.py C:/path/to/Inbox.mbox --output ingestion/data/reports/new-catalog --max-mib 1024
+```
+
+`src/discover_records.py` selects catalog leads using a private JSON rule file:
+
+```json
+{"start_date":"2024-01-01","end_date":"2026-12-31","rules":[{"name":"travel","any_terms":["hotel","rail reservation"]},{"name":"conference","all_terms":["conference"],"any_terms":["registration","logistics"]}]}
+```
+
+Terms match header subject/sender literally, ignoring case. Date limits restrict
+message timestamps, so choose them wide enough to include early bookings and late
+receipts. Selection is not event membership. Normalization retains whole readable
+messages, excludes Promotions, verifies unchanged catalog sources and applies
+message/count/total-byte limits. Reports record budget-skipped leads.
+
+```powershell
+server/.venv/Scripts/python.exe ingestion/src/discover_records.py ingestion/data/reports/new-catalog --rules ingestion/data/reports/my-rules.json --output ingestion/data/reports/new-leads --max-records 1500 --max-source-mib 64
+```
+
+`src/event_candidates.py` then compares **reviewed observations** with separate
+event date ranges. It uses activity dates, places/entities and exact references;
+message timestamps and shared merchant names alone cannot connect annual events.
+Reference/date conflicts are labeled. Reservations, cancellations, provider-reported
+charges and attendance keep distinct statuses. Every proposed link remains pending
+membership review, including strong leads. An exact source excerpt checks presence,
+not whether a date/location extraction is semantically correct; extraction review
+is required before linking. This prototype does not automatically extract facts
+from arbitrary mail, accept links or publish articles.
+
+The fictional conference fixtures include an early hotel booking, a cancellation,
+a transaction record and an unrelated reservation in another city. To inspect the
+generic linking output:
+
+```powershell
+server/.venv/Scripts/python.exe ingestion/src/event_candidates.py --records ingestion/fixtures/event-linking-records.jsonl --observations ingestion/fixtures/event-linking-observations.json --events ingestion/fixtures/event-linking-events.json --output ingestion/data/reports/new-event-links.json
+```
+
+Real bank/card export adapters are not implemented. The transaction fixture tests
+the shared source envelope and link logic; it is not a personal bank ingestion.
+See the [recurring-event experiment](../docs/experiments/2026-10-23-recurring-event-reconstruction.md)
+for the expanded private-mail pilot and conversation limitations.

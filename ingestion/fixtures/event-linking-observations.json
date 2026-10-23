@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "status": "reviewed",
+  "reviewer": "Fixture author",
+  "facts": [
+    {
+      "id": "hotel",
+      "record_id": "hotel",
+      "quotes": [
+        "Reservation: conference hotel June 4-6, 2025. Ref A1."
+      ],
+      "start_date": "2025-06-04",
+      "end_date": "2025-06-06",
+      "status": "reservation",
+      "places": [
+        "Boston"
+      ]
+    },
+    {
+      "id": "cancellation",
+      "record_id": "cancellation",
+      "quotes": [
+        "Cancelled: June 4-6, 2026 hotel reservation."
+      ],
+      "start_date": "2026-06-04",
+      "end_date": "2026-06-06",
+      "status": "cancelled",
+      "places": [
+        "Boston"
+      ]
+    },
+    {
+      "id": "transaction",
+      "record_id": "transaction",
+      "quotes": [
+        "Hotel charge June 5, 2025 in Boston."
+      ],
+      "start_date": "2025-06-04",
+      "end_date": "2025-06-06",
+      "status": "charge",
+      "places": [
+        "Boston"
+      ]
+    },
+    {
+      "id": "unrelated",
+      "record_id": "unrelated",
+      "quotes": [
+        "Same date, another city: June 5, 2025 in Denver."
+      ],
+      "start_date": "2025-06-04",
+      "end_date": "2025-06-06",
+      "status": "reservation",
+      "places": [
+        "Denver"
+      ]
+    }
+  ]
+}

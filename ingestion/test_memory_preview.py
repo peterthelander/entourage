@@ -44,6 +44,20 @@ class MemoryPreviewTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.preview.read_source(identity, offset=10, snapshot="wrong")
 
+    def test_article_excerpts_keep_their_own_source_timestamps(self):
+        article = self.preview.read_article("community-garden")["article"]
+        for claim in article["claims"]:
+            for evidence in claim["evidence"]:
+                self.assertEqual(evidence["observed_at"], self.preview.records[evidence["record_id"]]["observed_at"])
+        self.assertNotIn("observed_at", self.preview.articles["community-garden"]["claims"][0]["evidence"][0])
+
+    def test_partial_leads_prioritize_topic_evidence_over_unknown_only_hits(self):
+        self.preview.articles["bicycle-maintenance"]["unknowns"].append("Garden workday details are unknown.")
+        result = self.preview.related_search(["garden workday"])
+        self.assertEqual(result["results"][0]["slug"], "community-garden")
+        bicycle = next(r for r in result["results"] if r["slug"] == "bicycle-maintenance")
+        self.assertEqual(bicycle["unknown_only_tokens"], ["garden", "workday"])
+
     def test_tampered_evidence_fails_validation(self):
         path = self.root / "plan.json"
         plan = json.loads(path.read_text())

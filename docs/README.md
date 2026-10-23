@@ -28,6 +28,8 @@ configuration table and link to them rather than copying values into several gui
 
 ## Experiments
 
+- [Recurring event reconstruction across years and sources](experiments/2026-10-23-recurring-event-reconstruction.md)
+
 - [Reviewed memory integration and live pilot, October 23](experiments/2026-10-23-reviewed-memory-integration.md)
 
 - [October 22 structure, support review and full ingestion pilot](experiments/2026-10-22-article-workflow.md)

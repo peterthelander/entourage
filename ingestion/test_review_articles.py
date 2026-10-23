@@ -33,6 +33,14 @@ class ArticleSupportReviewTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_response("[]", checks)
 
+    def test_optional_activity_period_is_included_in_support_triage(self):
+        article = next(a for a in self.plan["articles"] if a["type"] == "instance")
+        article["activity_period"] = {"start_date": "2025-06-06", "end_date": "2025-06-06"}
+        _, checks = plan_checks(self.records, self.plan)
+        period = next(c for c in checks if c["kind"] == "activity_period")
+        self.assertIn("2025-06-06", period["text"])
+        self.assertTrue(period["record_ids"])
+
     def test_rejects_cross_record_or_invented_quotes(self):
         records, checks = plan_checks(self.records, self.plan)
         checks = [c for c in checks if "evidence" in c]
