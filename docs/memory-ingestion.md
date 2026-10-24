@@ -170,6 +170,15 @@ status. Bank/card adapters and automatic observation extraction are not implemen
 
 ## Next implementation boundary
 
+The [memory-faithfulness follow-up](experiments/2026-10-23-memory-faithfulness.md)
+separates normal retrieval, supplied articles and complete-source answering.
+Local answers still fail with complete evidence. A bounded source-context
+candidate preserved some nearby identifiers/qualifications, but did not improve
+the broader matched comparison and was removed before deployment. Article reads
+and accepted bundles retain their previous behavior. The reusable diagnostic
+runner and authored transfer controls support the next model/configuration study;
+neither constitutes independent validation or automatic article repair.
+
 The [fresh-topic source-first experiment](experiments/2026-10-23-fresh-memory-validation.md)
 now separates a new personal conversational baseline, automatic article proposals,
 and a controlled source-excerpt comparison. It also fixes a demonstrated HTML

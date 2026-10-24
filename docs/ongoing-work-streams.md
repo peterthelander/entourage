@@ -144,6 +144,11 @@ benefit such as maintainability; record that reason explicitly.
 
 The immediate proposed focus is independent memory validation and faithful use
 of retrieved sources, alongside remaining search stopping/recovery failures.
+The [memory-faithfulness comparison](experiments/2026-10-23-memory-faithfulness.md)
+now separates evidence availability from answering. A bounded source-context
+candidate and a reconciliation prompt were rejected. Complete evidence still
+produces local reasoning failures, making a controlled model/configuration
+comparison more informative than further prompt rules or archive expansion.
 The [fresh-topic source-first study](experiments/2026-10-23-fresh-memory-validation.md)
 adds frozen experiment/review tooling and a verified HTML ingestion fix. Its
 controlled local excerpt comparison improves payment qualifications but retains

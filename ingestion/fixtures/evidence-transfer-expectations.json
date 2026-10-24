@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "created_before_inference": true,
+  "independent_review": false,
+  "scope": "Authored synthetic transfer controls frozen before production intervention; not an independent personal-topic holdout.",
+  "cases": [
+    {
+      "id": "maple-orders",
+      "criteria": [
+        {
+          "turn": 1,
+          "expected": "MW-21 changed from May 6 at 2 PM to May 5 at 11 AM. The later MW-22 notice is a different order and cannot supersede MW-21.",
+          "source_ids": [
+            "maple-a-first",
+            "maple-a-revised",
+            "maple-b-later"
+          ]
+        },
+        {
+          "turn": 2,
+          "expected": "No. MW-21 latest estimate is $90, not the separate MW-22 $160 estimate. Neither actual collection nor settled payment is established.",
+          "source_ids": [
+            "maple-a-first",
+            "maple-a-revised",
+            "maple-b-later"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "river-session",
+      "criteria": [
+        {
+          "turn": 1,
+          "expected": "The 09:00 UTC notice is later than 10:30 +02:00 (08:30 UTC); it revises June 10 to June 12 at 7 PM. Do not reverse the notices or mistake June 1 source dates for activity dates.",
+          "source_ids": [
+            "river-revision",
+            "river-original"
+          ]
+        },
+        {
+          "turn": 2,
+          "expected": "Attendance is unknown. June 12 is the latest proposed activity date in the selected notices, not proof of attendance.",
+          "source_ids": [
+            "river-revision",
+            "river-original"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "juniper-repair",
+      "criteria": [
+        {
+          "turn": 1,
+          "expected": "The later receipt reports completion and collection April 6 and a settled $96 including tax, with zero balance. April 7 and $120 were earlier estimates.",
+          "source_ids": [
+            "juniper-estimate",
+            "juniper-receipt"
+          ]
+        },
+        {
+          "turn": 2,
+          "expected": "The selected receipt reports a final settled $96 and $0 due; $120 is superseded estimate. Recognize explicit completion and payment evidence rather than abstaining about everything.",
+          "source_ids": [
+            "juniper-estimate",
+            "juniper-receipt"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "harbor-refunds",
+      "criteria": [
+        {
+          "turn": 1,
+          "expected": "Two seats $44 together plus $6 fee, total paid $50. General refund deadline 24 hours before performance; benefit performances are an explicit nonrefundable exception.",
+          "source_ids": [
+            "harbor-order"
+          ]
+        },
+        {
+          "turn": 2,
+          "expected": "Cannot confirm refund eligibility because benefit-performance status is unknown. Attendee names and actual attendance are not established. Preserve known paid amount without inventing eligibility.",
+          "source_ids": [
+            "harbor-order"
+          ]
+        }
+      ]
+    }
+  ]
+}

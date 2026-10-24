@@ -97,10 +97,19 @@ def review_template(report_path, expected_path, *, manifest_path=None):
         if (report.get("freeze_manifest_sha256") != digest(manifest_path)
                 or digest(expected_path) != manifest["files"].get(str(Path(expected_path).resolve()))):
             raise ValueError("Report/expectations do not match the frozen experiment")
+        if report.get("diagnostic_modes") != manifest.get("diagnostic_modes"):
+            raise ValueError("Report diagnostic modes do not match the frozen experiment")
     by_id = {case["id"]: case for case in expected["cases"]}
     rows, seen = [], set()
+    modes = report.get("diagnostic_modes")
+    if modes is not None and (not modes or len(set(modes)) != len(modes)):
+        raise ValueError("Invalid diagnostic mode plan")
     for run in report["runs"]:
         key = (run["provider"], run["repeat"], run["case"])
+        if modes is not None:
+            if run.get("mode") not in modes:
+                raise ValueError("Run has an unplanned diagnostic mode")
+            key += (run["mode"],)
         if key in seen:
             raise ValueError("Duplicate case run in report")
         seen.add(key)
@@ -111,6 +120,7 @@ def review_template(report_path, expected_path, *, manifest_path=None):
         for criterion in case["criteria"]:
             turn = turns.get(criterion["turn"])
             rows.append({"provider": key[0], "repeat": key[1], "case": key[2],
+                         **({"mode": key[3]} if modes is not None else {}),
                          **criterion, "execution_status": turn["status"] if turn else "not_run",
                          "verdict": "pending", "notes": ""})
     return {"version": 1, "report_sha256": digest(report_path),
@@ -145,9 +155,13 @@ def summarize_review(report_path, expected_path, review_path, *, manifest_path=N
     missing = []
     plan = read(manifest_path)["planned_runs"] if manifest_path is not None else report.get("planned_runs")
     if plan is not None:
-        seen = {(r["provider"], r["repeat"], r["case"]) for r in report["runs"]}
-        missing = [{"provider": p, "repeat": n, "case": c} for p in plan["providers"]
-                   for n in range(1, plan["repeats"] + 1) for c in plan["case_ids"] if (p, n, c) not in seen]
+        modes = report.get("diagnostic_modes")
+        seen = {(r["provider"], r["repeat"], r["case"], r.get("mode")) for r in report["runs"]}
+        missing = [{"provider": p, "repeat": n, "case": c,
+                    **({"mode": mode} if modes is not None else {})} for p in plan["providers"]
+                   for n in range(1, plan["repeats"] + 1) for c in plan["case_ids"]
+                   for mode in (modes if modes is not None else [None])
+                   if (p, n, c, mode) not in seen]
     return {"version": 1, "report_status": report["status"], "semantic_counts": dict(counts),
             "review_complete": not counts["pending"] and not missing,
             "independent_review": review["independent_review"], "missing_runs": missing,

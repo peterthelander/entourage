@@ -28,6 +28,7 @@ configuration table and link to them rather than copying values into several gui
 
 ## Experiments
 
+- [Memory faithfulness: evidence availability versus answering](experiments/2026-10-23-memory-faithfulness.md)
 - [Fresh-topic memory validation and evidence-excerpt comparison](experiments/2026-10-23-fresh-memory-validation.md)
 - [Recurring event reconstruction across years and sources](experiments/2026-10-23-recurring-event-reconstruction.md)
 - [Reviewed memory integration and live pilot, October 23](experiments/2026-10-23-reviewed-memory-integration.md)

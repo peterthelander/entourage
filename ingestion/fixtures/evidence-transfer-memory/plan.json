@@ -1,0 +1,133 @@
+{
+  "version": 1,
+  "articles": [
+    {
+      "slug": "maple-orders",
+      "title": "Maple Workshop orders",
+      "description": "Authored transfer control; not an independent real-topic holdout.",
+      "type": "concept",
+      "claims": [
+        {
+          "type": "source_statement",
+          "text": "The dated source states: Order MW-21: pickup proposed for May 6, 2026, 2 PM. Estimate $85. This is a scheduling notice.",
+          "evidence": [
+            {
+              "record_id": "maple-a-first",
+              "quote": "Order MW-21: pickup proposed for May 6, 2026, 2 PM. Estimate $85. This is a scheduling notice."
+            }
+          ]
+        },
+        {
+          "type": "source_statement",
+          "text": "The dated source states: Order MW-21: revised pickup is May 5, 2026, 11 AM, replacing May 6. Estimate $90. This is a scheduling notice.",
+          "evidence": [
+            {
+              "record_id": "maple-a-revised",
+              "quote": "Order MW-21: revised pickup is May 5, 2026, 11 AM, replacing May 6. Estimate $90. This is a scheduling notice."
+            }
+          ]
+        },
+        {
+          "type": "source_statement",
+          "text": "The dated source states: Separate order MW-22: pickup proposed for May 8, 2026, 4 PM. Estimate $160. This does not revise MW-21.",
+          "evidence": [
+            {
+              "record_id": "maple-b-later",
+              "quote": "Separate order MW-22: pickup proposed for May 8, 2026, 4 PM. Estimate $160. This does not revise MW-21."
+            }
+          ]
+        }
+      ],
+      "unknowns": [
+        "Collection and final payment are unknown for both orders."
+      ],
+      "links": []
+    },
+    {
+      "slug": "river-session",
+      "title": "River Observatory session",
+      "description": "Authored transfer control; not an independent real-topic holdout.",
+      "type": "concept",
+      "claims": [
+        {
+          "type": "source_statement",
+          "text": "The dated source states: Session R-8 revised date: June 12, 2026, 7 PM, replacing June 10. This is a proposal, not an attendance report.",
+          "evidence": [
+            {
+              "record_id": "river-revision",
+              "quote": "Session R-8 revised date: June 12, 2026, 7 PM, replacing June 10. This is a proposal, not an attendance report."
+            }
+          ]
+        },
+        {
+          "type": "source_statement",
+          "text": "The dated source states: Session R-8 proposed date: June 10, 2026, 7 PM. This is a proposal, not an attendance report.",
+          "evidence": [
+            {
+              "record_id": "river-original",
+              "quote": "Session R-8 proposed date: June 10, 2026, 7 PM. This is a proposal, not an attendance report."
+            }
+          ]
+        }
+      ],
+      "unknowns": [
+        "Attendance and any subsequent arrangements are unknown."
+      ],
+      "links": []
+    },
+    {
+      "slug": "juniper-repair",
+      "title": "Juniper Camera repair",
+      "description": "Authored transfer control; not an independent real-topic holdout.",
+      "type": "concept",
+      "claims": [
+        {
+          "type": "source_statement",
+          "text": "The dated source states: Repair JC-5 estimate: $120. Planned completion April 7, 2026. No payment has been recorded in this estimate.",
+          "evidence": [
+            {
+              "record_id": "juniper-estimate",
+              "quote": "Repair JC-5 estimate: $120. Planned completion April 7, 2026. No payment has been recorded in this estimate."
+            }
+          ]
+        },
+        {
+          "type": "source_statement",
+          "text": "The dated source states: Repair JC-5 completion receipt: repair completed and camera collected April 6, 2026. Final settled charge $96, tax included. Balance due $0.",
+          "evidence": [
+            {
+              "record_id": "juniper-receipt",
+              "quote": "Repair JC-5 completion receipt: repair completed and camera collected April 6, 2026. Final settled charge $96, tax included. Balance due $0."
+            }
+          ]
+        }
+      ],
+      "unknowns": [
+        "The receipt records the historical outcome, not the present condition of the camera."
+      ],
+      "links": []
+    },
+    {
+      "slug": "harbor-refunds",
+      "title": "Harbor Arts booking",
+      "description": "Authored transfer control; not an independent real-topic holdout.",
+      "type": "concept",
+      "claims": [
+        {
+          "type": "source_statement",
+          "text": "The dated source states: Booking HA-7: two seats cost $44 together, service fee $6, total paid $50. General refund requests are accepted until 24 hours before the performance, except benefit performances, which are nonrefundable. This notice does not identify whether HA-7 is a benefit performance and does not name attendees.",
+          "evidence": [
+            {
+              "record_id": "harbor-order",
+              "quote": "Booking HA-7: two seats cost $44 together, service fee $6, total paid $50. General refund requests are accepted until 24 hours before the performance, except benefit performances, which are nonrefundable. This notice does not identify whether HA-7 is a benefit performance and does not name attendees."
+            }
+          ]
+        }
+      ],
+      "unknowns": [
+        "Benefit-performance status, attendee identities and actual attendance are unknown."
+      ],
+      "links": []
+    }
+  ]
+}

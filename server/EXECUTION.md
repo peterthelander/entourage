@@ -211,6 +211,8 @@ model call, 2 MiB of upstream output, and four executed tool calls per turn. Whe
 the next batch would exceed that limit, one answer-only model pass can summarize
 the evidence already retrieved, with further tools disabled. Context and
 output token limits are configured at startup; see [configuration](README.md).
+A model reply with no tool calls and a blank answer fails the turn explicitly;
+it does not create a completed placeholder assistant message. The user can retry.
 History follows the [session selection policy](#start-python); failed turns,
 tool rows, and errors are excluded from ordinary prior-turn model history.
 The opt-in reviewed-memory pilot retains bounded article/source evidence as

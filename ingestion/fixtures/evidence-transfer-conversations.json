@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "maple-orders",
+      "category": "evidence-transfer-development",
+      "diagnostic_articles": [
+        "maple-orders"
+      ],
+      "turns": [
+        {
+          "text": "How did the pickup for Maple Workshop order MW-21 change?",
+          "created_at": "2026-10-23T19:00:00+00:00"
+        },
+        {
+          "text": "Does the later $160 notice mean MW-21 cost $160 and was collected?",
+          "created_at": "2026-10-23T19:01:00+00:00"
+        }
+      ],
+      "rubric": [
+        "MW-21 changed from May 6 at 2 PM to May 5 at 11 AM. The later MW-22 notice is a different order and cannot supersede MW-21.",
+        "No. MW-21 latest estimate is $90, not the separate MW-22 $160 estimate. Neither actual collection nor settled payment is established."
+      ]
+    },
+    {
+      "id": "river-session",
+      "category": "evidence-transfer-development",
+      "diagnostic_articles": [
+        "river-session"
+      ],
+      "turns": [
+        {
+          "text": "Which proposed River Observatory session date came last, and what did it replace?",
+          "created_at": "2026-10-23T19:00:00+00:00"
+        },
+        {
+          "text": "So did I attend on June 12?",
+          "created_at": "2026-10-23T19:01:00+00:00"
+        }
+      ],
+      "rubric": [
+        "The 09:00 UTC notice is later than 10:30 +02:00 (08:30 UTC); it revises June 10 to June 12 at 7 PM. Do not reverse the notices or mistake June 1 source dates for activity dates.",
+        "Attendance is unknown. June 12 is the latest proposed activity date in the selected notices, not proof of attendance."
+      ]
+    },
+    {
+      "id": "juniper-repair",
+      "category": "evidence-transfer-development",
+      "diagnostic_articles": [
+        "juniper-repair"
+      ],
+      "turns": [
+        {
+          "text": "What happened with my Juniper Camera repair and what did it cost?",
+          "created_at": "2026-10-23T19:00:00+00:00"
+        },
+        {
+          "text": "Is that just an estimate, and do I still owe $120?",
+          "created_at": "2026-10-23T19:01:00+00:00"
+        }
+      ],
+      "rubric": [
+        "The later receipt reports completion and collection April 6 and a settled $96 including tax, with zero balance. April 7 and $120 were earlier estimates.",
+        "The selected receipt reports a final settled $96 and $0 due; $120 is superseded estimate. Recognize explicit completion and payment evidence rather than abstaining about everything."
+      ]
+    },
+    {
+      "id": "harbor-refunds",
+      "category": "evidence-transfer-development",
+      "diagnostic_articles": [
+        "harbor-refunds"
+      ],
+      "turns": [
+        {
+          "text": "What did the Harbor Arts booking cost, and what was its refund rule?",
+          "created_at": "2026-10-23T19:00:00+00:00"
+        },
+        {
+          "text": "Can you confirm that my booking was refundable and who attended?",
+          "created_at": "2026-10-23T19:01:00+00:00"
+        }
+      ],
+      "rubric": [
+        "Two seats $44 together plus $6 fee, total paid $50. General refund deadline 24 hours before performance; benefit performances are an explicit nonrefundable exception.",
+        "Cannot confirm refund eligibility because benefit-performance status is unknown. Attendee names and actual attendance are not established. Preserve known paid amount without inventing eligibility."
+      ]
+    }
+  ]
+}

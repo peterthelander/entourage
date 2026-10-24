@@ -37,6 +37,21 @@ class ConversationEvaluationTests(unittest.TestCase):
         self.cases = {case["id"]: case for case in evaluation.load_cases(evaluation.FIXTURE)["cases"]}
         self.settings = Settings(gemini_api_key="synthetic")
 
+    def test_empty_model_answer_is_failed_and_does_not_run_a_followup(self):
+        case = {"id": "empty-answer", "rubric": ["Do not report empty inference as a completed answer"], "turns": [
+            {"text": "What was the delivery window?", "created_at": "2026-10-23T10:00:00+00:00"},
+            {"text": "And the cost?", "created_at": "2026-10-23T10:01:00+00:00"}]}
+        model = ScriptedModel([{"content": " \n\t", "tool_calls": []}])
+        result = asyncio.run(evaluation.run_case(case, self.settings, model))
+        self.assertFalse(result["all_turns_executed"])
+        self.assertEqual(len(result["turns"]), 1)
+        turn = result["turns"][0]
+        self.assertEqual(turn["status"], "failed")
+        self.assertIsNone(turn["answer"])
+        self.assertIn("no answer", turn["error"])
+        self.assertEqual(turn["responses"][0]["content"], " \n\t")
+        self.assertFalse(turn["mechanical_pass"])
+
     def test_inference_progress_preserves_inputs_replies_and_tool_evidence(self):
         snapshots = []
         case = {"id": "progress", "rubric": ["Report missing evidence"], "turns": [

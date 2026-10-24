@@ -295,7 +295,10 @@ class Worker:
                 if not isinstance(calls, list):
                     raise RuntimeError("Malformed model tool calls.")
                 if not calls:
-                    answer = reply.get("content", "").strip() or "The model returned no answer."
+                    answer = reply.get("content", "").strip()
+                    if not answer:
+                        self.store.finish(turn, error="The model returned no answer. Try again.")
+                        return
                     self.store.progress(turn["id"], answer)
                     self.store.finish(turn, answer=answer)
                     return

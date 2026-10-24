@@ -3,3 +3,5 @@ ingestion/fixtures/reviewed-conversation-memory/records.jsonl text eol=lf
 ingestion/fixtures/reviewed-conversation-memory/plan.json text eol=lf
 ingestion/fixtures/source-binding-memory/records.jsonl text eol=lf
 ingestion/fixtures/source-binding-memory/plan.json text eol=lf
+ingestion/fixtures/evidence-transfer-memory/records.jsonl text eol=lf
+ingestion/fixtures/evidence-transfer-memory/plan.json text eol=lf

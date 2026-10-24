@@ -236,3 +236,36 @@ report's planned-run set when no freeze manifest is supplied.
 
 The [fresh-topic experiment](2026-10-23-fresh-memory-validation.md) records the
 first source-first personal trials and a controlled evidence-excerpt comparison.
+
+### Separating discovery from answering
+
+`scripts/diagnose-memory.py` compares ordinary `retrieval` with explicitly
+supplied `articles` or complete `sources`. Each supplied case needs a
+`diagnostic_articles` list of valid article slugs. The committed
+`ingestion/fixtures/evidence-transfer-conversations.json` provides an example,
+with explicitly labeled fictional expectations and a reviewed fixture bundle.
+Its authorship is coding-agent development work, not independent validation.
+
+```powershell
+server/.venv/Scripts/python.exe scripts/diagnose-memory.py --bundle ingestion/fixtures/evidence-transfer-memory --fixture ingestion/fixtures/evidence-transfer-conversations.json --expected ingestion/fixtures/evidence-transfer-expectations.json --output scratch/new-memory-diagnosis --providers local --modes retrieval articles sources --repeats 2 --inference-timeout 90
+```
+
+The runner freezes inputs, code, inference settings, modes and per-request timeout
+before inference. It requires new output paths, preserves active/failed cases,
+and records local engine metadata before and after. Supplied evidence is labeled
+untrusted data in the user input; no provider tool history is fabricated. Source
+pagination is assembled completely within explicit diagnostic size bounds.
+
+Supplied modes bypass discovery and the executed-call budget, disable further
+tools, and resupply evidence on follow-up. They are diagnostic oracles, not
+production quality scores or tests of normal evidence retention. Unexpected
+answer-only tool requests fail without execution and remain in
+`diagnostic_rejected_replies`. The deadline applies around the whole inference
+call, including streaming, even if a transport specifies its own timeout.
+
+Use the same review-template and summarize commands with the diagnostic report,
+its `freeze.json`, and the unchanged expectations. Review rows include `mode`;
+missing modes remain missing planned runs rather than disappearing from totals.
+Inspect full answers and source records, including correct tables followed by
+incorrect prose. See the [faithfulness study](2026-10-23-memory-faithfulness.md)
+for findings and rejected interventions.

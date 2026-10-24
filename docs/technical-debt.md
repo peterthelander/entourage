@@ -52,6 +52,13 @@ state remain independently deployable.
 
 ## Reviewed memory and evaluation gaps
 
+- The [evidence-versus-answering comparison](experiments/2026-10-23-memory-faithfulness.md)
+  still finds local chronology, estimate/settlement and object-identity errors
+  with complete source evidence. Reconciliation-prompt and bounded-source-context
+  trials did not justify production adoption; the broader context comparison was
+  13 passing/8 failing/3 unclear turns versus 14/8/2 in its matched control.
+  Empty model replies now fail execution explicitly instead of becoming completed
+  placeholder answers. Semantic answer failures remain distinct.
 - The live 33-source/nine-article pilot is hand-curated. Private topic selectors,
   user hints and reviewed observations supplied discovery and membership decisions;
   reliable automatic extraction, synthesis and incremental publication are not

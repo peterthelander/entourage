@@ -141,6 +141,40 @@ class MemoryValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "identity"):
             summarize_review(report, self.expected, review)
 
+    def test_diagnostic_modes_keep_distinct_runs_and_missing_conditions(self):
+        report = self.report()
+        data = read(report)
+        data["diagnostic_modes"] = ["retrieval", "sources"]
+        data["planned_runs"] = {"providers": ["local"], "repeats": 1, "case_ids": ["garden"]}
+        data["runs"][0]["mode"] = "retrieval"
+        report.write_text(json.dumps(data))
+        template = review_template(report, self.expected)
+        self.assertEqual(template["rows"][0]["mode"], "retrieval")
+        template["reviewer"] = "Reviewer"
+        for row in template["rows"]:
+            row.update(verdict="fail", notes="Uncompleted")
+        review = self.root / "review.json"
+        write_new(review, template)
+        result = summarize_review(report, self.expected, review)
+        self.assertEqual(result["missing_runs"], [{"provider": "local", "repeat": 1, "case": "garden", "mode": "sources"}])
+        data["runs"].append({**data["runs"][0], "mode": "sources"})
+        report.write_text(json.dumps(data))
+        self.assertEqual(len(review_template(report, self.expected)["rows"]), 4)
+
+    def test_review_cannot_silently_drop_a_frozen_diagnostic_condition(self):
+        from memory_validation import digest
+        manifest = self.manifest()
+        manifest["diagnostic_modes"] = ["articles", "sources"]
+        manifest_path = self.root / "freeze.json"
+        write_new(manifest_path, manifest)
+        report = self.report()
+        data = read(report)
+        data.update(freeze_manifest_sha256=digest(manifest_path), diagnostic_modes=["articles"])
+        data["runs"][0]["mode"] = "articles"
+        report.write_text(json.dumps(data))
+        with self.assertRaisesRegex(ValueError, "diagnostic modes"):
+            review_template(report, self.expected, manifest_path=manifest_path)
+
     def test_runner_persists_failures_and_retains_completed_cases(self):
         spec = importlib.util.spec_from_file_location("knowledge_runner", ROOT / "scripts/evaluate-knowledge.py")
         runner = importlib.util.module_from_spec(spec)
