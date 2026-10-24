@@ -24,6 +24,10 @@ class ReadableHTML(HTMLParser):
         self.chunks = []
 
     def handle_starttag(self, tag, attrs):
+        # Real mail can omit </head>. An explicit body starts visible content;
+        # HTMLParser emits tokens but does not perform this HTML tree repair.
+        if tag == "body" and self.hidden == ["head"]:
+            self.hidden.pop()
         if tag in ("script", "style", "head"):
             self.hidden.append(tag)
         if not self.hidden and tag in ("br", "p", "div", "li", "tr", "h1", "h2", "h3"):

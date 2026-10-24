@@ -81,6 +81,11 @@ def assess(turn, status, answer, tools):
 class RecordingModel:
     def __init__(self, model):
         self.model, self.requests, self.responses, self.failures = model, [], [], []
+        self.on_change = None
+
+    def changed(self, phase):
+        if self.on_change is not None:
+            self.on_change(phase)
 
     def __getattr__(self, name):
         if name == "finalize" and hasattr(self.model, "finalize"):
@@ -89,26 +94,32 @@ class RecordingModel:
 
     async def _finalize(self, messages, on_text):
         self.requests.append(deepcopy(messages))
+        self.changed("finalizing")
         try:
             reply = await self.model.finalize(messages, on_text)
         except Exception as error:
             self.failures.append({"error_type": type(error).__name__, "http_status": getattr(error, "http_status", None)})
+            self.changed("inference_failed")
             raise
         self.responses.append(deepcopy(reply))
+        self.changed("finalized")
         return reply
 
     async def generate(self, messages, on_text):
         self.requests.append(deepcopy(messages))
+        self.changed("generating")
         try:
             reply = await self.model.generate(messages, on_text)
         except Exception as error:
             self.failures.append({"error_type": type(error).__name__, "http_status": getattr(error, "http_status", None)})
+            self.changed("inference_failed")
             raise
         self.responses.append(deepcopy(reply))
+        self.changed("generated")
         return reply
 
 
-async def run_case(case, settings, model, *, knowledge_bundle=None):
+async def run_case(case, settings, model, *, knowledge_bundle=None, on_progress=None):
     # No production store, refresh process, device or real web-tool calls.
     with TemporaryDirectory(prefix="entourage-eval-") as directory:
         settings = replace(settings, database_path=Path(directory) / "evaluation.sqlite3",
@@ -155,6 +166,15 @@ async def run_case(case, settings, model, *, knowledge_bundle=None):
                 failures_before = len(recorder.failures)
                 web_before = len(fixture_calls)
                 started = time.monotonic()
+                if on_progress is not None:
+                    def progress(phase):
+                        on_progress({"case": case["id"], "completed_turns": deepcopy(runs),
+                                     "active_turn": {"turn": index + 1, "prompt": turn["text"],
+                                                     "phase": phase,
+                                                     "inputs": deepcopy(recorder.requests[before:]),
+                                                     "responses": deepcopy(recorder.responses[response_before:]),
+                                                     "inference_failures": deepcopy(recorder.failures[failures_before:])}})
+                    recorder.on_change = progress
                 await Worker(store, settings, recorder).execute(store.claim())
                 result = store.get_turn(turn_id)
                 with store.connect(write=True) as db:

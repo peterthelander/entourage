@@ -170,6 +170,13 @@ status. Bank/card adapters and automatic observation extraction are not implemen
 
 ## Next implementation boundary
 
+The [fresh-topic source-first experiment](experiments/2026-10-23-fresh-memory-validation.md)
+now separates a new personal conversational baseline, automatic article proposals,
+and a controlled source-excerpt comparison. It also fixes a demonstrated HTML
+normalization failure. Coding-agent authorship and review are explicit; independent
+human validation remains pending. Fuller evidence improved payment qualifications
+on the small local comparison but did not solve correction chronology.
+
 The next milestone is a frozen evaluation on previously untouched real topics.
 Use independently prepared source-backed expected findings, retain the first
 results and failures, and move a case into development/regression once it informs

@@ -17,6 +17,15 @@ Current trip cases are development/regression examples. See the
 [evaluation separation protocol](../docs/experiments/conversation-evaluations.md#memory-experiments-and-holdout-separation)
 for the next untouched-topic validation milestone.
 
+The [fresh-topic validation record](../docs/experiments/2026-10-23-fresh-memory-validation.md)
+separates manually curated conversational memory from automatic article proposals.
+It includes a verified HTML normalization fix and a controlled evidence-excerpt
+comparison; independent human review remains pending. Portable fictional
+regressions use `fixtures/source-binding-memory/` with the matching
+`source-binding-conversations.json` and `source-binding-expectations.json`.
+Use the [freeze/review workflow](../docs/experiments/conversation-evaluations.md#freezing-and-reviewing-a-memory-experiment)
+for new studies, preserving all first-run failures before interventions.
+
 ## Layout
 
 - `src/`: reusable parsing, filtering and batch-processing code as it is developed.

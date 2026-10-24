@@ -67,6 +67,13 @@ state remain independently deployable.
   structure and retrieval help some cases but have not established reliable
   multi-turn source binding. Preserve failed traces and use controlled comparisons
   before choosing further model, context or retrieval changes.
+- The [fresh-topic study](experiments/2026-10-23-fresh-memory-validation.md)
+  additionally shows correct tables followed by reversed chronology, unsupported
+  timezone conversions and overstated archive coverage. Expanded source excerpts
+  improve payment qualifications on a small local comparison, but do not fix
+  chronology. Article generation can omit source exceptions despite valid literal
+  citations; automatic acceptance remains unjustified. Fictional source-binding
+  regression inputs and explicit freeze/review tooling now exist.
 - The four executed-call budget now has an answer-only finalization pass. A hosted
   reference still requested tools after finalization disabled them and failed;
   this recovery path does not guarantee completion. Execution success and semantic

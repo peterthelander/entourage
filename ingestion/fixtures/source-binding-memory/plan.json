@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "articles": [
+    {
+      "slug": "cedar-pantry",
+      "type": "concept",
+      "title": "Cedar Pantry delivery revisions",
+      "description": "Fictional source-binding regression evidence; not an independent holdout.",
+      "claims": [
+        {
+          "type": "source_statement",
+          "text": "Order reference: CP-42. New delivery window: March 4, 2026, 2 PM to 4 PM. Estimated total: $180. The tip is a separate charge. This is not a delivery receipt.",
+          "evidence": [
+            {
+              "record_id": "pantry-first",
+              "quote": "Order reference: CP-42. New delivery window: March 4, 2026, 2 PM to 4 PM. Estimated total: $180. The tip is a separate charge. This is not a delivery receipt."
+            }
+          ]
+        },
+        {
+          "type": "source_statement",
+          "text": "Order reference: CP-42. New delivery window: March 4, 2026, 10 AM to noon. Estimated total: $180. The tip is a separate charge. This is not a delivery receipt.",
+          "evidence": [
+            {
+              "record_id": "pantry-second",
+              "quote": "Order reference: CP-42. New delivery window: March 4, 2026, 10 AM to noon. Estimated total: $180. The tip is a separate charge. This is not a delivery receipt."
+            }
+          ]
+        },
+        {
+          "type": "source_statement",
+          "text": "Order reference: CP-42. New delivery window: March 3, 2026, 4 PM to 6 PM. Estimated total: $190. The tip is a separate charge. This is not a delivery receipt.",
+          "evidence": [
+            {
+              "record_id": "pantry-third",
+              "quote": "Order reference: CP-42. New delivery window: March 3, 2026, 4 PM to 6 PM. Estimated total: $190. The tip is a separate charge. This is not a delivery receipt."
+            }
+          ]
+        }
+      ],
+      "unknowns": [
+        "Actual delivery, final payment, and any later changes are unknown. These are selected historical notices, not a complete account inventory."
+      ],
+      "links": []
+    },
+    {
+      "slug": "cedar-studio",
+      "type": "concept",
+      "title": "Cedar Studio class rescheduling",
+      "description": "Fictional source-binding regression evidence; not an independent holdout.",
+      "claims": [
+        {
+          "type": "source_statement",
+          "text": "The Cedar Studio class originally proposed for February is now scheduled for April 9, 2026, from 9 AM to 11 AM. This announcement does not record attendance.",
+          "evidence": [
+            {
+              "record_id": "studio-session",
+              "quote": "The Cedar Studio class originally proposed for February is now scheduled for April 9, 2026, from 9 AM to 11 AM. This announcement does not record attendance."
+            }
+          ]
+        }
+      ],
+      "unknowns": [
+        "Actual attendance and current class arrangements are unknown."
+      ],
+      "links": []
+    },
+    {
+      "slug": "lantern-theatre",
+      "type": "concept",
+      "title": "Lantern Theatre ticket order",
+      "description": "Fictional source-binding regression evidence; not an independent holdout.",
+      "claims": [
+        {
+          "type": "source_statement",
+          "text": "Order LT-17: two standard tickets cost $32 together, two junior tickets cost $20 together, booking fee $6, total $58. Refunds may be requested up to one hour before showtime, except special events, which are not refundable. This order does not name attendees or confirm attendance.",
+          "evidence": [
+            {
+              "record_id": "theatre-order",
+              "quote": "Order LT-17: two standard tickets cost $32 together, two junior tickets cost $20 together, booking fee $6, total $58. Refunds may be requested up to one hour before showtime, except special events, which are not refundable. This order does not name attendees or confirm attendance."
+            }
+          ]
+        }
+      ],
+      "unknowns": [
+        "Named companions, actual attendance and special-event refund eligibility are unknown."
+      ],
+      "links": []
+    }
+  ]
+}

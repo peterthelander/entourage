@@ -37,6 +37,34 @@ class ConversationEvaluationTests(unittest.TestCase):
         self.cases = {case["id"]: case for case in evaluation.load_cases(evaluation.FIXTURE)["cases"]}
         self.settings = Settings(gemini_api_key="synthetic")
 
+    def test_inference_progress_preserves_inputs_replies_and_tool_evidence(self):
+        snapshots = []
+        case = {"id": "progress", "rubric": ["Report missing evidence"], "turns": [
+            {"text": "What did I say about the unknown subject?", "created_at": "2026-10-23T10:00:00+00:00"}]}
+        model = ScriptedModel([call("searchMemories", {"keywords": ["unknown"]}),
+                               {"content": "I do not have that information."}])
+        result = asyncio.run(evaluation.run_case(case, self.settings, model, on_progress=snapshots.append))
+        self.assertEqual(result["turns"][0]["status"], "completed")
+        self.assertEqual([s["active_turn"]["phase"] for s in snapshots],
+                         ["generating", "generated", "generating", "generated"])
+        self.assertEqual(snapshots[0]["active_turn"]["responses"], [])
+        self.assertEqual(len(snapshots[-1]["active_turn"]["responses"]), 2)
+        self.assertTrue(any(m["role"] == "tool" for m in snapshots[-1]["active_turn"]["inputs"][-1]))
+        self.assertEqual(len(snapshots[0]["active_turn"]["inputs"]), 1)
+
+    def test_inference_progress_keeps_failed_attempt(self):
+        class FailedModel:
+            async def generate(self, messages, on_text):
+                raise TimeoutError("synthetic timeout")
+        snapshots = []
+        case = {"id": "progress-failure", "rubric": ["Do not count execution failure as success"], "turns": [
+            {"text": "Recall something", "created_at": "2026-10-23T10:00:00+00:00"}]}
+        result = asyncio.run(evaluation.run_case(case, self.settings, FailedModel(), on_progress=snapshots.append))
+        self.assertEqual(result["turns"][0]["status"], "failed")
+        self.assertEqual(snapshots[-1]["active_turn"]["phase"], "inference_failed")
+        self.assertEqual(snapshots[-1]["active_turn"]["inference_failures"],
+                         [{"error_type": "TimeoutError", "http_status": None}])
+
     def test_production_worker_combines_conversations_and_reviewed_imports(self):
         from test_knowledge import reviewed_fixture
         from entourage_server.knowledge_bundle import KnowledgeBundle

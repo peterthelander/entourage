@@ -162,3 +162,77 @@ must not be promoted into imported knowledge to make a later test pass. Preserve
 the exact reviewed source snapshot, original provenance, and contradictory/missing
 evidence. A stronger model can expose differences in source use but is not an
 independent ground-truth author or reviewer merely by being stronger.
+
+## Freezing and reviewing a memory experiment
+
+The committed `ingestion/fixtures/source-binding-memory/` bundle and matching
+`source-binding-conversations.json` / `source-binding-expectations.json` files
+provide a fictional example for the workflow below. They are regression material,
+not independent validation.
+
+`scripts/validate-memory-experiment.py` supports source-first experiments. Prepare
+the reviewed bundle, conversation fixture and expected findings before inference.
+An expectations file has this shape (use actual source IDs from that bundle):
+
+```json
+{
+  "version": 1,
+  "created_before_inference": true,
+  "independent_review": false,
+  "scope": "Coding-agent source-first review; manual article curation",
+  "cases": [{
+    "id": "case-id-from-conversation-fixture",
+    "criteria": [{
+      "turn": 1,
+      "expected": "Source-backed finding and acceptable uncertainty for this turn.",
+      "source_ids": ["source-id-from-bundle"]
+    }]
+  }]
+}
+```
+
+Cover every case and turn exactly once. The tool validates references and artifact
+identity; a reviewer must still verify that the expected findings are supported.
+`independent_review` is a declared property, not something the tool can establish.
+Do not mark coding-agent curation and scoring as independent validation.
+
+```powershell
+server/.venv/Scripts/python.exe scripts/validate-memory-experiment.py freeze --bundle scratch/memory/bundle --fixture scratch/memory/conversations.json --expected scratch/memory/expected.json --output scratch/memory/freeze.json --providers local gemini --repeats 2
+server/.venv/Scripts/python.exe scripts/evaluate-knowledge.py --bundle scratch/memory/bundle --fixture scratch/memory/conversations.json --output scratch/memory/first-run --providers local gemini --repeats 2 --freeze-manifest scratch/memory/freeze.json
+server/.venv/Scripts/python.exe scripts/validate-memory-experiment.py review-template --report scratch/memory/first-run/report.json --expected scratch/memory/expected.json --manifest scratch/memory/freeze.json --output scratch/memory/review.json
+```
+
+The freeze records exact source/plan/review, fixture, expectations and execution
+code hashes, effective provider/model/context/output/session settings and the
+planned provider/repeat/case set. For a different hosted model, pass the same
+`--gemini-model` to both freeze and evaluation. Credential values and endpoint
+addresses are excluded. These are application identities, not a complete frozen
+remote engine or sampling environment. Keep the manifest and inputs private when
+they identify personal files. The evaluator checks the freeze before inference,
+before each case and at completion. Changing inputs or code requires a new
+experiment; the original first-run directory is never reused. Without
+`--freeze-manifest`, older evaluation commands remain supported.
+
+Complete the template's reviewer and each row's `verdict` (`pass`, `fail`,
+`unclear`, or `pending`) and evidence `notes`. Leave its artifact identities,
+expected findings and execution statuses intact. Inspect the full answer and
+retrieved evidence; additional false claims can fail an otherwise correct answer.
+Then write a separate summary:
+
+```powershell
+server/.venv/Scripts/python.exe scripts/validate-memory-experiment.py summarize --report scratch/memory/first-run/report.json --expected scratch/memory/expected.json --manifest scratch/memory/freeze.json --review scratch/memory/review.json --output scratch/memory/summary.json
+```
+
+All output paths must be new. Summaries preserve pending/unclear findings, failed
+and unattempted follow-up turns, and missing planned runs. Failed or unexecuted
+turns cannot receive a pass. A complete review can contain failures; it is not a
+quality gate or permission to publish. The evaluator also records terminal
+exception/interruption status while preserving completed case reports.
+During a knowledge case, `active_run` is saved before and after inference calls,
+including the current turn's inputs, replies, failures and earlier completed turns.
+It is removed once the full case result is saved. This preserves partial evidence
+if the process is interrupted during a long request. Review summaries use the
+report's planned-run set when no freeze manifest is supplied.
+
+The [fresh-topic experiment](2026-10-23-fresh-memory-validation.md) records the
+first source-first personal trials and a controlled evidence-excerpt comparison.

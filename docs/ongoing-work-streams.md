@@ -144,6 +144,11 @@ benefit such as maintainability; record that reason explicitly.
 
 The immediate proposed focus is independent memory validation and faithful use
 of retrieved sources, alongside remaining search stopping/recovery failures.
+The [fresh-topic source-first study](experiments/2026-10-23-fresh-memory-validation.md)
+adds frozen experiment/review tooling and a verified HTML ingestion fix. Its
+controlled local excerpt comparison improves payment qualifications but retains
+chronology errors; it is coding-agent-reviewed development evidence, not an
+independent holdout result.
 Evaluation coverage and everyday feedback should continue together. Update this
 overview when priorities or implementation status change. Keep machine configuration
 in the local runbook and detailed results in linked experiment records.

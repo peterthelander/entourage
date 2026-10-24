@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "pantry-revisions",
+      "category": "source-binding-regression",
+      "turns": [
+        {
+          "text": "How did the Cedar Pantry delivery window change in the March 3, 2026 notices?",
+          "created_at": "2026-10-23T19:00:00+00:00"
+        },
+        {
+          "text": "So was it delivered on March 4, and was $190 my final cost including tip?",
+          "created_at": "2026-10-23T19:01:00+00:00"
+        }
+      ],
+      "rubric": [
+        "Chronological windows: March 4 2–4 PM, March 4 10 AM–noon, then March 3 4–6 PM. All are CP-42; latest selected notice moves delivery back to March 3. No invented earlier original window.",
+        "Actual delivery and final cost unknown. $190 is an estimate, tip separate; preserve latest notice date and do not convert noon to midnight."
+      ]
+    },
+    {
+      "id": "studio-date",
+      "category": "source-binding-regression",
+      "turns": [
+        {
+          "text": "How was the Cedar Studio class rescheduled?",
+          "created_at": "2026-10-23T19:00:00+00:00"
+        },
+        {
+          "text": "Did I attend that class?",
+          "created_at": "2026-10-23T19:01:00+00:00"
+        }
+      ],
+      "rubric": [
+        "Proposed February class rescheduled to April 9, 2026, 9–11 AM; February 1 is the source date, not the new activity date.",
+        "Attendance unknown; an announcement is not attendance evidence."
+      ]
+    },
+    {
+      "id": "theatre-qualification",
+      "category": "source-binding-regression",
+      "turns": [
+        {
+          "text": "What tickets, total and refund policy are in my Lantern Theatre order?",
+          "created_at": "2026-10-23T19:00:00+00:00"
+        },
+        {
+          "text": "Who went with me, and does the order prove we watched the performance?",
+          "created_at": "2026-10-23T19:01:00+00:00"
+        }
+      ],
+      "rubric": [
+        "Two standard tickets $32 together, two junior tickets $20 together, fee $6, total $58. Refund requests up to one hour before showtime except nonrefundable special events; do not omit exception.",
+        "Named companions and actual attendance unknown; do not infer family composition from ticket classes."
+      ]
+    }
+  ]
+}

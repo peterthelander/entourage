@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "created_before_inference": true,
+  "independent_review": false,
+  "scope": "Authored fictional regression cases derived from development failures, not untouched validation.",
+  "cases": [
+    {
+      "id": "pantry-revisions",
+      "criteria": [
+        {
+          "turn": 1,
+          "expected": "Chronological windows: March 4 2–4 PM, March 4 10 AM–noon, then March 3 4–6 PM. All are CP-42; latest selected notice moves delivery back to March 3. No invented earlier original window.",
+          "source_ids": [
+            "pantry-first",
+            "pantry-second",
+            "pantry-third"
+          ]
+        },
+        {
+          "turn": 2,
+          "expected": "Actual delivery and final cost unknown. $190 is an estimate, tip separate; preserve latest notice date and do not convert noon to midnight.",
+          "source_ids": [
+            "pantry-first",
+            "pantry-second",
+            "pantry-third"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "studio-date",
+      "criteria": [
+        {
+          "turn": 1,
+          "expected": "Proposed February class rescheduled to April 9, 2026, 9–11 AM; February 1 is the source date, not the new activity date.",
+          "source_ids": [
+            "studio-session"
+          ]
+        },
+        {
+          "turn": 2,
+          "expected": "Attendance unknown; an announcement is not attendance evidence.",
+          "source_ids": [
+            "studio-session"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "theatre-qualification",
+      "criteria": [
+        {
+          "turn": 1,
+          "expected": "Two standard tickets $32 together, two junior tickets $20 together, fee $6, total $58. Refund requests up to one hour before showtime except nonrefundable special events; do not omit exception.",
+          "source_ids": [
+            "theatre-order"
+          ]
+        },
+        {
+          "turn": 2,
+          "expected": "Named companions and actual attendance unknown; do not infer family composition from ticket classes.",
+          "source_ids": [
+            "theatre-order"
+          ]
+        }
+      ]
+    }
+  ]
+}

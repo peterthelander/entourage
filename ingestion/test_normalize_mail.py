@@ -57,6 +57,21 @@ class MailNormalizerTests(unittest.TestCase):
         self.assertIsNone(reason)
         self.assertIn("charset_decode_fallback_utf8_replacement", record["extraction"]["warnings"])
 
+    def test_html_body_recovers_from_omitted_head_end_without_exposing_metadata(self):
+        for closing in ("</head>", ""):
+            with self.subTest(head_end=closing):
+                message = mail('<html><head><title>Private metadata</title>'
+                               '<style>hidden stylesheet</style>' + closing +
+                               '<body><p>Order confirmation: four tickets.</p>'
+                               '<script>hidden script</script><style>hidden body style</style>'
+                               '<p>Total: $84.</p></body></html>')
+                message.set_type("text/html")
+                raw = mbox(message)
+                record, reason = normalize(raw, Path("synthetic.mbox"), 0)
+                self.assertIsNone(reason)
+                self.assertEqual(record["text"], "Order confirmation: four tickets.\n\nTotal: $84.")
+                self.assertEqual(record["source"]["sha256"], hashlib.sha256(raw).hexdigest())
+
     def test_rejections_and_no_topic_filter(self):
         message = mail("Unrelated bicycle maintenance.")
         message["X-Gmail-Labels"] = "Inbox, Category Promotions"

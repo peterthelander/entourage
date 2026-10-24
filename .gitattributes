@@ -1,3 +1,5 @@
 # Review snapshots hash exact fixture bytes; keep them stable across platforms.
 ingestion/fixtures/reviewed-conversation-memory/records.jsonl text eol=lf
 ingestion/fixtures/reviewed-conversation-memory/plan.json text eol=lf
+ingestion/fixtures/source-binding-memory/records.jsonl text eol=lf
+ingestion/fixtures/source-binding-memory/plan.json text eol=lf
