@@ -24,6 +24,27 @@ test('browser connects automatically without a bearer token', async () => {
   assert.equal(headers.Authorization, undefined);
 });
 
+test('proxy outages report service unavailability instead of a JSON syntax error', async () => {
+  const { AgentClient, AgentApiError } = load(async () => ({
+    ok: false, status: 502, json: async () => { throw new SyntaxError('The string did not match the expected pattern.'); },
+  }));
+  await assert.rejects(new AgentClient('https://agent.example/agent').health(),
+    (error) => error instanceof AgentApiError && error.status === 502 && /service is unavailable/.test(error.message));
+});
+
+test('inference verification uses a separate endpoint and preserves configured versus loaded identity', async () => {
+  let requested;
+  const { AgentClient } = load(async (url) => {
+    requested = url;
+    return { ok: true, json: async () => ({ status: 'model_mismatch',
+      configured_model: 'old.gguf', loaded_model: 'Qwen.gguf' }) };
+  });
+  const result = await new AgentClient('https://agent.example/agent').inference();
+  assert.equal(requested, 'https://agent.example/agent/api/v1/inference');
+  assert.equal(result.loaded_model, 'Qwen.gguf');
+  assert.equal(result.configured_model, 'old.gguf');
+});
+
 test('single chat resolution does not create a client-specific conversation', async () => {
   const calls = [];
   const { AgentClient } = load(async (url, options) => {
@@ -102,6 +123,7 @@ test('sending during a poll preserves the pending message and blocks a stale sec
   let active = null;
   class FakeClient {
     async health() { return { execution_enabled: true }; }
+    async inference() { return { status: 'ready', configured_model: 'test', loaded_model: 'test' }; }
     async register() {}
     async chat() { return { id: 'shared' }; }
     async latest() { return active; }

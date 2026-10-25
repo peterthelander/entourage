@@ -19,6 +19,8 @@ from entourage_server.execution_store import ExecutionStore
 from entourage_server.worker_lock import worker_lock
 from entourage_server.journals import export_journals
 from entourage_server.storage import SINGLE_CHAT_ID
+from entourage_server.llama_cpp import LlamaCpp
+from entourage_server.inference_errors import InferenceError
 
 TOKEN = "test-owner-token-" * 3
 KEY = "test-device-key-" * 3
@@ -95,7 +97,10 @@ class ExecutionTests(unittest.TestCase):
             self.assertEqual(model.generated, 5)
             self.assertEqual(model.finalized, 1)
             self.assertEqual(len([m for m in model.final_messages if m["role"] == "tool"]), 4)
-            self.assertEqual(model.final_messages[-1]["role"], "system")
+            self.assertEqual([m["role"] for m in model.final_messages].count("system"), 1)
+            self.assertEqual(model.final_messages[0]["role"], "system")
+            self.assertIn("No more tools can run", model.final_messages[0]["content"])
+            self.assertEqual(model.final_messages[-1]["role"], "tool")
             rows = client.get(f"/api/v1/conversations/{self.conversation}/messages").json()["items"]
             self.assertEqual(len([m for m in rows if m["kind"] == "tool"]), 4)
 
@@ -114,6 +119,121 @@ class ExecutionTests(unittest.TestCase):
             self.assertEqual(result["status"], "failed")
             rows = client.get(f"/api/v1/conversations/{self.conversation}/messages").json()["items"]
             self.assertFalse(any(m["kind"] == "tool" for m in rows))
+
+    def test_three_calls_then_over_budget_batch_works_with_strict_llama_template(self):
+        requests = []
+
+        def handle(request):
+            body = json.loads(request.content)
+            requests.append(body)
+            # Reproduce the Qwen server's real restriction, not just a scripted
+            # finalizer accepting any list of messages.
+            if any(m["role"] == "system" for m in body["messages"][1:]):
+                return httpx.Response(500, json={"error": {"message": "System message must be at the beginning."}})
+            if len(requests) < 3:
+                calls = [{"index": i, "id": f"call-{len(requests)}-{i}", "type": "function", "function": {
+                    "name": "calculate", "arguments": json.dumps({"operation": "add", "a": 1, "b": 2})
+                }} for i in range(3 if len(requests) == 1 else 2)]
+                delta, finish = {"tool_calls": calls}, "tool_calls"
+            else:
+                self.assertEqual(body["tools"], [])
+                self.assertEqual(len([m for m in body["messages"] if m["role"] == "tool"]), 3)
+                self.assertIn("No more tools can run", body["messages"][0]["content"])
+                delta, finish = {"content": "The three recorded calculations returned 3."}, "stop"
+            return httpx.Response(200, text="data: " + json.dumps({"choices": [{"delta": delta, "finish_reason": finish}]}) + "\n\ndata: [DONE]\n\n")
+
+        upstream = httpx.AsyncClient(transport=httpx.MockTransport(handle))
+        with self.client(LlamaCpp(self.settings, upstream)) as client:
+            self.submit(client)
+            result = self.wait(client, {"completed", "failed"})
+            self.assertEqual(result["status"], "completed")
+            self.assertEqual(len(requests), 3)
+            rows = client.get(f"/api/v1/conversations/{self.conversation}/messages").json()["items"]
+            self.assertEqual(len([m for m in rows if m["kind"] == "tool"]), 3)
+            self.assertEqual(rows[-1]["kind"], "assistant")
+
+    def test_typed_inference_error_is_saved_without_private_upstream_details(self):
+        class LimitedModel:
+            async def generate(self, messages, on_text):
+                on_text("incomplete answer")
+                raise InferenceError("output_limit", "The model reached the response token limit before finishing.")
+
+        with self.client(LimitedModel()) as client:
+            self.submit(client)
+            result = self.wait(client, {"completed", "failed"})
+            self.assertEqual(result["status"], "failed")
+            self.assertIn("response token limit", result["error"])
+            self.assertIsNone(result["answer"])
+            rows = client.get(f"/api/v1/conversations/{self.conversation}/messages").json()["items"]
+            self.assertFalse(any(m["kind"] == "assistant" for m in rows))
+
+    def test_transport_failure_messages_distinguish_timeout_and_connection(self):
+        for failure, expected in [(httpx.ReadTimeout("private URL"), "took too long"),
+                                  (httpx.ConnectError("private URL"), "connection to the inference server failed")]:
+            with self.subTest(expected=expected):
+                class FailedModel:
+                    async def generate(self, messages, on_text):
+                        raise failure
+                with self.client(FailedModel()) as client:
+                    self.submit(client)
+                    result = self.wait(client, {"failed"})
+                    self.assertIn(expected, result["error"])
+                    self.assertNotIn("private", result["error"])
+                    self.assertIsNone(result["answer"])
+
+    def test_context_pressure_finalizes_once_with_existing_evidence_and_no_extra_tool(self):
+        test_case = self
+
+        class ContextModel:
+            generated = 0
+            finalized = 0
+
+            async def generate(self, messages, on_text):
+                self.generated += 1
+                if self.generated == 1:
+                    return {"tool_calls": [{"id": "c1", "function": {"name": "calculate", "arguments": {
+                        "operation": "add", "a": 1, "b": 2}}}]}
+                raise InferenceError("context_limit", "Context budget exceeded.")
+
+            async def finalize(self, messages, on_text):
+                self.finalized += 1
+                test_case.assertIn("context budget", messages[0]["content"])
+                test_case.assertEqual([m["role"] for m in messages].count("system"), 1)
+                test_case.assertEqual(len([m for m in messages if m["role"] == "tool"]), 1)
+                return {"content": "The recorded calculation returned 3."}
+
+        model = ContextModel()
+        with self.client(model) as client:
+            self.submit(client)
+            self.assertEqual(self.wait(client, {"completed", "failed"})["status"], "completed")
+            self.assertEqual((model.generated, model.finalized), (2, 1))
+            rows = client.get(f"/api/v1/conversations/{self.conversation}/messages").json()["items"]
+            self.assertEqual(len([m for m in rows if m["kind"] == "tool"]), 1)
+
+    def test_context_that_still_cannot_fit_is_failed_without_retrying_or_fabricating_answer(self):
+        class NoRoom:
+            generated = 0
+            finalized = 0
+
+            async def generate(self, messages, on_text):
+                self.generated += 1
+                if self.generated == 1:
+                    return {"tool_calls": [{"id": "c1", "function": {"name": "calculate", "arguments": {
+                        "operation": "add", "a": 1, "b": 2}}}]}
+                raise InferenceError("context_limit", "The request exceeds the context window.")
+
+            async def finalize(self, messages, on_text):
+                self.finalized += 1
+                raise InferenceError("context_limit", "The request exceeds the context window.")
+
+        model = NoRoom()
+        with self.client(model) as client:
+            self.submit(client)
+            result = self.wait(client, {"completed", "failed"})
+            self.assertEqual(result["status"], "failed")
+            self.assertIn("context window", result["error"])
+            self.assertIsNone(result["answer"])
+            self.assertEqual((model.generated, model.finalized), (2, 1))
 
     def test_entire_calculator_loop_finishes_without_polling_client_and_retries_do_not_repeat(self):
         with self.client() as client:

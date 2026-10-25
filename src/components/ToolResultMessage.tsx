@@ -10,6 +10,8 @@ const toolLabels: Record<string, string> = {
   searchMemories: 'Memory search',
   getMemoryInventory: 'Memory inventory',
   readMemories: 'Read memories',
+  readKnowledgeArticle: 'Read memory article',
+  readKnowledgeSource: 'Read memory source',
   searchWeb: 'Web search',
   readWebPage: 'Read web page',
 };
@@ -23,10 +25,13 @@ export function ToolResultMessage({ text }: { text: string }) {
   if (name === 'searchWeb' || name === 'readWebPage') {
     try { searchFailed = JSON.parse(output).status !== (name === 'searchWeb' ? 'results' : 'read'); } catch { searchFailed = true; }
   }
+  if (name === 'readKnowledgeArticle' || name === 'readKnowledgeSource') {
+    try { searchFailed = JSON.parse(output).status !== 'ready'; } catch { searchFailed = true; }
+  }
   const failed = output.startsWith('Tool failed:') ||
     searchFailed ||
     (name === 'getCurrentLocation' && output.startsWith('Location permission was denied'));
-  const toolName = toolLabels[name] ? `${toolLabels[name]} (${name})` : name || 'Tool';
+  const toolName = toolLabels[name] || name || 'Tool';
   const label = `${toolName} ${failed ? 'unavailable' : 'completed'}`;
 
   return (

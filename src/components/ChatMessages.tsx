@@ -72,8 +72,8 @@ const styles = StyleSheet.create({
   },
   assistantBubble: {
     minWidth: 0,
-    alignSelf: 'flex-start',
-    maxWidth: '80%',
+    alignSelf: 'stretch',
+    maxWidth: '100%',
     backgroundColor: '#10283a',
     borderRadius: 18,
     borderBottomLeftRadius: 6,

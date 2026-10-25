@@ -13,10 +13,14 @@ from .memory import search_memories, memory_inventory, read_memories
 from .knowledge import KNOWLEDGE_READ_TOOLS, KNOWLEDGE_PROMPT, knowledge_operation, load_current
 from .web_search import SEARCH_TOOL, search_web
 from .web_pages import PAGE_TOOL, read_web_page
+from .inference_errors import InferenceError
 
 SYSTEM_PROMPT = (
     "You are Entourage, a helpful personal assistant. Answer the latest question clearly and concisely, "
-    "using conversation history when relevant. The provided tool definitions are the source of truth "
+    "using conversation history when relevant. Keep answers conversational and proportional to the request; "
+    "start with the useful answer and omit unnecessary detail. Prefer short paragraphs or lists, especially "
+    "for topic summaries and long descriptions. Use tables only when comparing shared attributes makes "
+    "the answer easier to read on a narrow screen. The provided tool definitions are the source of truth "
     "for your available capabilities and inputs. Use tools when their data or calculation is needed. "
     "Call tools using structured tool calls with arguments matching their schemas. Ground personal and "
     "live facts in tool results; request fresh measurements when needed. Do not invent facts, capabilities, "
@@ -265,6 +269,27 @@ class Worker:
             else:
                 await asyncio.sleep(0.1)
 
+    async def finish_with_evidence(self, turn, messages, calls_used, partial, reason):
+        finalize = getattr(self.model, "finalize", None)
+        if finalize is None:
+            return False
+        final_instruction = (reason + " No more tools can run for this turn. Answer the latest user question "
+                             "from the evidence already retrieved. Clearly state missing evidence, uncertainty "
+                             "or partial coverage. Do not invent facts or claim that any unexecuted action occurred.")
+        # Some model templates allow a system message only at the beginning.
+        final_messages = [{**messages[0], "content": messages[0]["content"] +
+                           "\n\n" + final_instruction}, *messages[1:]]
+        self.store.checkpoint(turn["id"], final_messages, calls_used)
+        final = await finalize(final_messages, partial)
+        if final.get("tool_calls"):
+            raise InferenceError("finalization_tools", "The model requested more tools after reaching the retrieval limit. Try a more focused question.")
+        answer = final.get("content", "").strip()
+        if not answer:
+            answer = "I reached the retrieval limit and do not have enough evidence to answer this reliably."
+        self.store.progress(turn["id"], answer)
+        self.store.finish(turn, answer=answer)
+        return True
+
     async def execute(self, turn):
         calls_used = 0
         try:
@@ -290,7 +315,14 @@ class Worker:
                         self.store.progress(turn["id"], text)
                         last_write = time.monotonic()
 
-                reply = await self.model.generate(messages, partial)
+                try:
+                    reply = await self.model.generate(messages, partial)
+                except InferenceError as error:
+                    if error.code == "context_limit" and calls_used and await self.finish_with_evidence(
+                            turn, messages, calls_used, partial,
+                            "The accumulated evidence exceeds the tool-enabled context budget."):
+                        return
+                    raise
                 calls = reply.get("tool_calls", [])
                 if not isinstance(calls, list):
                     raise RuntimeError("Malformed model tool calls.")
@@ -303,22 +335,8 @@ class Worker:
                     self.store.finish(turn, answer=answer)
                     return
                 if calls_used + len(calls) > 4:
-                    finalize = getattr(self.model, "finalize", None)
-                    if finalize is not None:
-                        final_messages = [*messages, {"role": "system", "content": (
-                            "The next requested tool batch would exceed the tool-call limit. No more tools "
-                            "can run for this turn. Answer the latest user question from the evidence already "
-                            "retrieved. Clearly state missing evidence, uncertainty or partial coverage. "
-                            "Do not invent facts or claim that any unexecuted action occurred.")}]
-                        self.store.checkpoint(turn["id"], final_messages, calls_used)
-                        final = await finalize(final_messages, partial)
-                        if final.get("tool_calls"):
-                            raise RuntimeError("Finalization must not request tools.")
-                        answer = final.get("content", "").strip()
-                        if not answer:
-                            answer = "I reached the retrieval limit and do not have enough evidence to answer this reliably."
-                        self.store.progress(turn["id"], answer)
-                        self.store.finish(turn, answer=answer)
+                    if await self.finish_with_evidence(turn, messages, calls_used, partial,
+                                                       "The next requested tool batch would exceed the tool-call limit."):
                         return
                     self.store.finish(turn, error="Tool-call limit reached. Try a simpler request.")
                     return
@@ -399,6 +417,12 @@ class Worker:
         except asyncio.CancelledError:
             self.store.finish(turn, error="Service stopped during turn; it was not replayed.", status="needs_review")
             raise
+        except InferenceError as error:
+            self.store.finish(turn, error=error.public_message)
+        except (httpx.TimeoutException, TimeoutError):
+            self.store.finish(turn, error="The inference server took too long to respond. Try a shorter request, or check whether the model is busy.")
+        except httpx.RequestError:
+            self.store.finish(turn, error="The connection to the inference server failed. Check that llama-server is running and the Mac is reachable, then try again.")
         except Exception:
             # Do not persist raw exception text: upstream errors can contain private data.
             self.store.finish(turn, error="Agent execution failed. Check inference server connectivity, context capacity and model support.")

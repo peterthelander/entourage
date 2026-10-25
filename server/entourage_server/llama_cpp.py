@@ -4,6 +4,7 @@ import asyncio
 import json
 
 from .agent import available_tools
+from .inference_errors import InferenceError
 
 
 class LlamaCpp:
@@ -32,16 +33,51 @@ class LlamaCpp:
     async def finalize(self, messages, on_text):
         return await self.generate(messages, on_text, tools_enabled=False)
 
+    @staticmethod
+    async def upstream_error(response):
+        error_body = bytearray()
+        async for chunk in response.aiter_bytes():
+            error_body.extend(chunk[:16384 - len(error_body)])
+            if len(error_body) >= 16384:
+                break
+        raw = error_body.decode("utf-8", errors="replace").lower()
+        if "system message must be at the beginning" in raw or "jinja exception" in raw:
+            raise InferenceError("prompt_template", "The inference server rejected the conversation format. Check model/template compatibility.")
+        if "exceed_context_size" in raw or "exceeds the available context" in raw or "exceeds the context size" in raw:
+            raise InferenceError("context_limit", "The request exceeds the inference server's context window. Shorten the conversation or increase its context capacity.")
+        raise InferenceError("upstream_http", f"The inference server returned HTTP {response.status_code}. Check its model and request settings.")
+
+    async def check_context(self, body):
+        # Hash-heavy memory results tokenize much more densely than ordinary
+        # prose. For large transcripts, ask this engine's actual template and
+        # tokenizer rather than treating four characters as one token.
+        if len(json.dumps(body["messages"], ensure_ascii=False).encode("utf-8")) <= self.settings.context_tokens:
+            return
+        upstream = self.settings.llama_cpp_upstream.rstrip("/")
+        rendered = await self.client.post(upstream + "/apply-template", json=body)
+        if rendered.status_code != 200:
+            await self.upstream_error(rendered)
+        measured = await self.client.post(upstream + "/tokenize", json={
+            "content": rendered.json()["prompt"], "add_special": False})
+        if measured.status_code != 200:
+            await self.upstream_error(measured)
+        tokens = measured.json()["tokens"]
+        if not isinstance(tokens, list):
+            raise InferenceError("context_measurement", "Could not measure the inference context. Check the inference server's tokenizer support.")
+        if len(tokens) + body["max_tokens"] > self.settings.context_tokens:
+            raise InferenceError("context_limit", f"The request needs {len(tokens):,} input tokens plus {body['max_tokens']:,} reserved response tokens, exceeding the {self.settings.context_tokens:,}-token context window. Shorten the request or reduce retrieved history; a larger context requires changing llama-server and the agent settings.")
+
     async def generate(self, messages, on_text, *, tools_enabled=True):
         body = {"model": self.settings.model, "messages": self.wire_messages(messages),
                 "tools": available_tools(self.settings) if tools_enabled else [], "stream": True, "max_tokens": self.settings.max_output_tokens,
                 "reasoning_format": "deepseek", "reasoning_effort": self.reasoning_effort}
         content, calls, size, finished = "", {}, 0, False
         async with asyncio.timeout(300):
+            await self.check_context(body)
             async with self.client.stream("POST", self.settings.llama_cpp_upstream.rstrip("/") +
                                           "/v1/chat/completions", json=body) as response:
                 if response.status_code != 200:
-                    raise RuntimeError(f"llama.cpp returned HTTP {response.status_code}.")
+                    await self.upstream_error(response)
                 async for line in response.aiter_lines():
                     size += len(line.encode("utf-8"))
                     if size > 2 * 1024 * 1024:
@@ -53,7 +89,7 @@ class LlamaCpp:
                     payload = line[5:].strip()
                     if payload == "[DONE]":
                         if not finished:
-                            raise RuntimeError("llama.cpp ended without a finish reason.")
+                            raise InferenceError("interrupted_stream", "The inference response ended before the model finished. No completed answer was saved. Try again; if this repeats, check the inference server.")
                         break
                     chunk = json.loads(payload)
                     if not isinstance(chunk, dict) or chunk.get("error"):
@@ -82,11 +118,13 @@ class LlamaCpp:
                         call["function"]["arguments"] += function.get("arguments", "")
                     reason = choice.get("finish_reason")
                     if reason is not None:
+                        if reason == "length":
+                            raise InferenceError("output_limit", "The model reached the response token limit before finishing. Try a shorter request or increase the output limit; thinking also uses that limit.")
                         if reason not in ("stop", "tool_calls"):
                             raise RuntimeError("Model output was truncated or could not finish.")
                         finished = True
         if not finished:
-            raise RuntimeError("llama.cpp stream ended before completion.")
+            raise InferenceError("interrupted_stream", "The inference response ended before the model finished. No completed answer was saved. Try again; if this repeats, check the inference server.")
         ordered = [calls[index] for index in sorted(calls)]
         for call in ordered:
             if not call["id"] or not call["function"]["name"]:

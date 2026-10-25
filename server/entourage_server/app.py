@@ -25,6 +25,7 @@ from .gemini import Gemini
 from .access import AccessControl
 from .worker_lock import worker_lock
 from .journal_refresh import JournalRefresh
+from .inference_status import InferenceStatus, inference_status
 
 
 class HealthResponse(BaseModel):
@@ -49,6 +50,7 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
         with worker_lock(config.database_path):
             store.recover()
             async with httpx.AsyncClient(timeout=httpx.Timeout(120), trust_env=False) as client:
+                app.state.inference_client = client
                 refresh = JournalRefresh(store, config.journal_timezone)
                 stop_refresh = asyncio.Event()
                 refresh_task = asyncio.create_task(refresh.run(stop_refresh))
@@ -65,6 +67,7 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
                         await task
                     stop_refresh.set()
                     await refresh_task
+                    app.state.inference_client = None
 
     app = FastAPI(
         title="Entourage Agent Server",
@@ -76,6 +79,7 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
     app.state.store = store
     app.state.worker = None
     app.state.worker_task = None
+    app.state.inference_client = None
     app.add_middleware(BodyLimit)
     app.add_middleware(AccessControl, token=config.api_token, origins=config.allowed_origins,
                        tailscale_login=config.tailscale_login, trust_local=config.trust_local)
@@ -111,5 +115,10 @@ def create_app(settings: Settings | None = None, model=None) -> FastAPI:
                               execution_enabled=config.execution_enabled, model=config.model if config.execution_enabled else None,
                               capabilities=["conversations", "history_import", "queued_turns"] +
                               (["agent_execution", "device_tools"] if config.execution_enabled else []))
+
+    @app.get("/api/v1/inference", response_model=InferenceStatus)
+    async def inspect_inference() -> InferenceStatus:
+        """Model metadata check; liveness remains a separate process-local check."""
+        return await inference_status(config, app.state.inference_client)
 
     return app

@@ -5,9 +5,62 @@ import httpx
 
 from entourage_server.config import Settings
 from entourage_server.llama_cpp import LlamaCpp
+from entourage_server.inference_errors import InferenceError
 
 
 class LlamaCppTests(unittest.IsolatedAsyncioTestCase):
+    async def test_large_transcript_uses_actual_template_and_tokens_before_generation(self):
+        for count, should_fit in ((8000, False), (4000, True)):
+            requests = []
+
+            def handle(request):
+                requests.append(request.url.path)
+                body = json.loads(request.content)
+                if request.url.path == "/apply-template":
+                    self.assertEqual(body["messages"][0]["content"], "source-id-" * 1500)
+                    self.assertTrue(body["tools"])
+                    return httpx.Response(200, json={"prompt": "engine-formatted transcript including tool definitions"})
+                if request.url.path == "/tokenize":
+                    self.assertIn("including tool definitions", body["content"])
+                    return httpx.Response(200, json={"tokens": [1] * count})
+                return httpx.Response(200, text='data: {"choices":[{"delta":{"content":"Grounded answer"},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n')
+
+            async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
+                model = LlamaCpp(Settings(), client)
+                if should_fit:
+                    result = await model.generate([{"role": "user", "content": "source-id-" * 1500}], lambda _: None)
+                    self.assertEqual(result["content"], "Grounded answer")
+                else:
+                    with self.assertRaises(InferenceError) as caught:
+                        await model.generate([{"role": "user", "content": "source-id-" * 1500}], lambda _: None)
+                    self.assertEqual(caught.exception.code, "context_limit")
+                    self.assertIn(f"{count:,} input tokens", str(caught.exception))
+                    self.assertIn(f"{model.settings.max_output_tokens:,} reserved response tokens", str(caught.exception))
+                    self.assertIn(f"{model.settings.context_tokens:,}-token context window", str(caught.exception))
+            self.assertEqual(requests, ["/apply-template", "/tokenize"] + (["/v1/chat/completions"] if should_fit else []))
+
+    async def test_inference_failures_report_safe_distinct_causes(self):
+        examples = [
+            (500, {"error": {"message": "private source text: Jinja Exception: System message must be at the beginning."}}, "prompt_template"),
+            (400, {"error": {"type": "exceed_context_size_error", "message": "private input"}}, "context_limit"),
+            (503, {"error": {"message": "private URL or token"}}, "upstream_http"),
+        ]
+        for status, body, expected in examples:
+            with self.subTest(expected=expected):
+                async with httpx.AsyncClient(transport=httpx.MockTransport(
+                        lambda _: httpx.Response(status, json=body))) as client:
+                    with self.assertRaises(InferenceError) as caught:
+                        await LlamaCpp(Settings(), client).generate([], lambda _: None)
+                self.assertEqual(caught.exception.code, expected)
+                self.assertNotIn("private", str(caught.exception))
+        async with httpx.AsyncClient(transport=httpx.MockTransport(lambda _: httpx.Response(200,
+                text='data: {"choices":[{"delta":{"reasoning_content":"private reasoning"},"finish_reason":"length"}]}\n\n'))) as client:
+            with self.assertRaises(InferenceError) as caught:
+                await LlamaCpp(Settings(), client).generate([], lambda _: None)
+        self.assertEqual(caught.exception.code, "output_limit")
+        self.assertIn("response token limit", str(caught.exception))
+        self.assertNotIn("private", str(caught.exception))
+
     async def test_finalization_removes_all_tools(self):
         captured = []
         def handle(request):

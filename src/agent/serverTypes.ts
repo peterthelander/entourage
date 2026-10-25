@@ -10,6 +10,7 @@ export type HealthResponse = { "status"?: "ok" | "unavailable"; "api_version"?: 
 export type HistoryImport = { "messages": (LegacyMessage)[]; };
 export type ImportPreview = { "total": number; "users": number; "assistants": number; "tools": number; "errors": number; "skipped": number; };
 export type ImportReceipt = { "id": string; "conversation_id": string; "imported_count": number; };
+export type InferenceStatus = { "status": "ready" | "configured" | "model_mismatch" | "unavailable"; "configured_model": string; "loaded_model"?: string | null; "message"?: string | null; };
 export type LegacyMessage = { "id": string; "role": "user" | "assistant"; "text": string; "createdAt"?: string | null; };
 export type Message = { "sequence": number; "conversation_id": string; "turn_id": string | null; "role": "user" | "assistant" | "tool"; "kind": "user" | "assistant" | "tool" | "error"; "text": string; "created_at": string; "legacy_id": string | null; };
 export type MessagePage = { "items": (Message)[]; "next_after": number | null; };

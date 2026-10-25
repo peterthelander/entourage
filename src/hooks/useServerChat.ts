@@ -3,7 +3,7 @@ import { AgentClient, AgentApiError } from '../agent/serverClient';
 import { createDeviceHandler, restoreDevice, type BrowserDevice } from '../agent/browserDevice';
 import { hasSavedHistory, legacyPendingPrompt, importCompleted, previewHistoryImport, commitHistoryImport } from '../agent/browserHistoryImport';
 import { fromServerMessage, type PresentationMessage } from '../agent/presentationMessage';
-import type { ImportPreview, Turn } from '../agent/serverTypes';
+import type { ImportPreview, InferenceStatus, Turn } from '../agent/serverTypes';
 
 type Pending = { conversation: string; id: string; text: string };
 
@@ -16,6 +16,7 @@ export function useServerChat(endpoint: string) {
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [model, setModel] = useState('');
+  const [inference, setInference] = useState<InferenceStatus | null>(null);
   const [latestTurn, setLatestTurn] = useState<Turn | null>(null);
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
   const [hasLegacy, setHasLegacy] = useState(hasSavedHistory);
@@ -33,12 +34,35 @@ export function useServerChat(endpoint: string) {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
     let polling = false;
+    let checkingInference = false;
+    let lastInferenceCheck = 0;
     const serveDevice = createDeviceHandler(api, prefix, () => device.current!);
+
+    const checkInference = async () => {
+      if (checkingInference || cancelled) return;
+      checkingInference = true;
+      try {
+        const status = await api.inference();
+        if (cancelled) return;
+        setInference(status);
+        setModel(status.loaded_model || status.configured_model);
+      } catch {
+        if (!cancelled) {
+          setModel('');
+          setInference({ status: 'unavailable', configured_model: '',
+            message: 'Could not verify the inference server. Check the agent connection.' });
+        }
+      } finally {
+        checkingInference = false;
+        lastInferenceCheck = Date.now();
+      }
+    };
 
     const poll = async () => {
       if (cancelled || polling || !currentConversation.current) return;
       polling = true;
       try {
+        if (Date.now() - lastInferenceCheck >= 15000) void checkInference();
         const identity = device.current!;
         const pending: Pending | null = JSON.parse(localStorage.getItem(prefix + 'pending') || 'null');
         if (pending) {
@@ -80,8 +104,11 @@ export function useServerChat(endpoint: string) {
     const start = async () => {
       try {
         const health = await api.health();
+        if (cancelled) return;
         if (!health.execution_enabled) throw new Error('Enable execution on the Python server first.');
         setModel(health.model || 'Server model');
+        await checkInference();
+        if (cancelled) return;
         const identity = restoreDevice(prefix);
         device.current = identity;
         await api.register(identity.id, identity.key);
@@ -105,9 +132,15 @@ export function useServerChat(endpoint: string) {
     return () => { cancelled = true; clearTimeout(timer); client.current = null; };
   }, [endpoint, prefix, connectionAttempt]);
 
-  const reconnect = () => { setReady(false); setConnectionAttempt((value) => value + 1); };
+  const reconnect = () => {
+    setReady(false);
+    setInference(null);
+    setModel('');
+    setConnectionAttempt((value) => value + 1);
+  };
+  const inferenceReady = inference?.status === 'ready' || inference?.status === 'configured';
   const handleSend = async () => {
-    if (!draft.trim() || !ready || busy || latestTurn?.status === 'needs_review' || sending.current) return;
+    if (!draft.trim() || !ready || !inferenceReady || busy || latestTurn?.status === 'needs_review' || sending.current) return;
     if (draft.trim().length > 16000) { setError('Please shorten the message to 16,000 characters.'); return; }
     sending.current = true;
     submissionError.current = '';
@@ -146,6 +179,6 @@ export function useServerChat(endpoint: string) {
     } catch (failure) { setError(String(failure)); }
   };
 
-  return { reconnect, messages, draft, setDraft, error, ready, busy, model, handleSend,
+  return { reconnect, messages, draft, setDraft, error, ready, busy, model, inference, inferenceReady, handleSend,
     latestTurn, stop, retry, hasLegacy, importPreview, previewHistory, commitHistory, legacyPending };
 }

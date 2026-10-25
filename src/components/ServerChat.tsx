@@ -6,9 +6,11 @@ import { CopyLatestExchange } from './CopyLatestExchange';
 
 export function ServerChat({ endpoint }: { endpoint: string }) {
   const chat = useServerChat(endpoint);
+  const modelName = chat.model.split(/[\\/]/).pop()?.replace(/\.gguf$/i, '') || chat.model;
   return <View style={styles.container}>
     <Text style={styles.title}>Entourage</Text>
-    {chat.model ? <Text style={styles.label}>{chat.model}</Text> : null}
+    {chat.model ? <Text style={styles.label}>{chat.inference?.loaded_model ? 'Model' : 'Configured model'}: {modelName}</Text> : null}
+    {chat.inference?.message ? <Text accessibilityRole="alert" style={styles.error}>{chat.inference.message}</Text> : null}
     {!chat.ready ? <Text style={styles.label}>Connecting to your agent…</Text> : null}
     {chat.error ? <Text accessibilityRole="alert" style={styles.error}>{chat.error}</Text> : null}
     {chat.error && !chat.ready ? <TouchableOpacity accessibilityRole="button" onPress={chat.reconnect}><Text style={styles.button}>Reconnect</Text></TouchableOpacity> : null}
@@ -35,7 +37,7 @@ export function ServerChat({ endpoint }: { endpoint: string }) {
       <TouchableOpacity accessibilityRole="button" onPress={chat.retry}><Text style={styles.button}>Copy request to retry</Text></TouchableOpacity> : null}
     <ChatMessages messages={chat.messages} isThinking={chat.busy} />
     <CopyLatestExchange messages={chat.messages} model={chat.model} busy={!chat.ready || chat.busy} />
-    <ChatComposer draft={chat.draft} setDraft={chat.setDraft} chatReady={chat.ready && chat.latestTurn?.status !== 'needs_review'} isThinking={chat.busy}
+    <ChatComposer draft={chat.draft} setDraft={chat.setDraft} chatReady={chat.ready && chat.inferenceReady && chat.latestTurn?.status !== 'needs_review'} isThinking={chat.busy}
       handleSend={chat.handleSend} />
   </View>;
 }

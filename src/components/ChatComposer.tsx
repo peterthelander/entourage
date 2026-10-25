@@ -11,6 +11,7 @@ type Props = {
 
 export function ChatComposer({ draft, setDraft, chatReady, isThinking, handleSend }: Props) {
   const isWebRuntime = Platform.OS === 'web';
+  const disabled = !chatReady || !draft.trim() || isThinking;
   return (
     <>
       <View style={styles.inputBar}>
@@ -39,12 +40,14 @@ export function ChatComposer({ draft, setDraft, chatReady, isThinking, handleSen
           textAlignVertical="center"
         />
         <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Send message"
           style={[
             styles.sendButton,
-            (!draft.trim() || isThinking) && styles.sendButtonDisabled,
+            disabled && styles.sendButtonDisabled,
           ]}
           onPress={handleSend}
-          disabled={!chatReady || !draft.trim() || isThinking}
+          disabled={disabled}
         >
           <Text style={styles.sendButtonText}>Send</Text>
         </TouchableOpacity>

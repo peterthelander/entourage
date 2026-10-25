@@ -32,6 +32,16 @@ Node proxy and browser agent have been removed.
 
 ## Start Python
 
+`GET /api/v1/health` checks the agent process and worker, not inference readiness.
+The separate authenticated `GET /api/v1/inference` checks llama.cpp's loaded model
+against the configured ID (including explicit aliases). A mismatch or unavailable
+engine is shown in the browser and disables new sends while saved history remains
+readable. The browser refreshes this metadata about every 15 seconds; a page
+refresh checks it again. Other providers currently report their configured model
+without claiming a verified loaded model. Metadata checks do not replace a real
+tool-loop smoke test. Update the agent's model setting and restart Python when
+switching the model served by llama.cpp.
+
 For llama.cpp, set `ENTOURAGE_INFERENCE_PROVIDER=llama_cpp`,
 `ENTOURAGE_LLAMA_CPP_UPSTREAM=http://<mac-ip>:8080` and `ENTOURAGE_MODEL` to an ID
 returned by `/v1/models`. The adapter handles streamed Chat Completions and tool
@@ -211,6 +221,19 @@ model call, 2 MiB of upstream output, and four executed tool calls per turn. Whe
 the next batch would exceed that limit, one answer-only model pass can summarize
 the evidence already retrieved, with further tools disabled. Context and
 output token limits are configured at startup; see [configuration](README.md).
+The finalization instruction stays in the initial system message for templates
+that reject later system messages. Large llama.cpp transcripts are measured with
+the engine's chat template and tokenizer before generation, including tool
+definitions and the requested response budget. If a tool-enabled request cannot
+fit, the worker can try the same bounded answer-only path once using evidence
+already retrieved. If that still cannot fit, the request fails explicitly; source
+text is not silently clipped to manufacture an answer. Template rejection,
+context/output limits, connection failures, timeouts and interrupted responses
+have distinct safe messages. Context preflight reports measured input tokens,
+reserved output tokens and configured capacity when available. Unknown failures
+retain a generic fallback; raw upstream response bodies are not shown. See the
+[failure-message reference](../docs/experiments/2026-10-24-browser-inference-recovery.md#failure-messages)
+for explanations and next steps.
 A model reply with no tool calls and a blank answer fails the turn explicitly;
 it does not create a completed placeholder assistant message. The user can retry.
 History follows the [session selection policy](#start-python); failed turns,

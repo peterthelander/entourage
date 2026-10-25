@@ -1,4 +1,4 @@
-import type { Conversation, HealthResponse, HistoryImport, ImportPreview, ImportReceipt, Message, MessagePage, Turn } from './serverTypes';
+import type { Conversation, HealthResponse, HistoryImport, ImportPreview, ImportReceipt, InferenceStatus, Message, MessagePage, Turn } from './serverTypes';
 
 export class AgentApiError extends Error {
   constructor(readonly status: number, message: string) { super(message); }
@@ -17,13 +17,23 @@ export class AgentClient {
           ...(deviceKey ? { 'X-Device-Key': deviceKey } : {}) },
         body: body ? JSON.stringify(body) : undefined,
       });
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch {
+        if (!response.ok) throw new AgentApiError(response.status,
+          [502, 503, 504].includes(response.status)
+            ? 'The agent service is unavailable. Waiting for it to reconnect.'
+            : `Agent service returned ${response.status}.`);
+        throw new AgentApiError(response.status, 'The agent service returned an unreadable response. Try reconnecting.');
+      }
       if (!response.ok) throw new AgentApiError(response.status, result.error?.message || `Agent service returned ${response.status}.`);
       return result as T;
     } finally { clearTimeout(timeout); }
   }
 
   health = () => this.request<HealthResponse>('/health');
+  inference = () => this.request<InferenceStatus>('/inference');
   chat = () => this.request<Conversation>('/chat', 'PUT');
   importChatHistory = (id: string, body: HistoryImport) => this.request<ImportReceipt>(`/chat/imports/${id}`, 'PUT', body);
   register = (id: string, key: string) => this.request(`/devices/${id}`, 'PUT', { key });
