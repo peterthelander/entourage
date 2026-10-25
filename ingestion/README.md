@@ -2,7 +2,7 @@
 
 Status: Bounded ingestion experiments and explicit reviewed publication implemented;
 a small reviewed pilot is live. Automatic synthesis/publication remains future work.
-Updated: October 23, 2026.
+Updated: October 24, 2026.
 
 This workspace is for Python batch-ingestion experiments with Google Takeout,
 MBOX mail, calendars and contacts. The Python service remains the owner of live
@@ -27,6 +27,13 @@ Use the [freeze/review workflow](../docs/experiments/conversation-evaluations.md
 for new studies, preserving all first-run failures before interventions.
 
 ## Layout
+
+The [October 24 broader-memory experiment](../docs/experiments/2026-10-24-broader-memory-sample.md)
+cataloged both available mailbox exports to EOF and selected a seeded sample
+across years without topic keywords. Coding-agent review added 36 sources and
+18 articles to the live bundle (69 sources and 27 articles total). This remains
+manual curation over a bounded sample; source discovery counts are not published
+memory coverage or evidence of autonomous extraction.
 
 - `src/`: reusable parsing, filtering and batch-processing code as it is developed.
 - `data/raw/`: optional local source archives and exports.

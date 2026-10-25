@@ -1,7 +1,7 @@
 # Memory ingestion development
 
 Status: Experimental pipeline with a small reviewed memory pilot connected to the live Python service.
-Updated: October 23, 2026.
+Updated: October 24, 2026.
 
 The goal is generic memory from personal activity and historical exports: dated
 evidence, organically organized concept articles, event/project instances and a
@@ -11,16 +11,19 @@ embedded in the pipeline.
 
 ## Current state and ownership
 
-The deployed pilot has 33 reviewed source records and nine articles. It supports
-retrieval of curated personal history, including three recurring-event instances;
-it does not autonomously reconstruct that history from the raw archive. No model
-weights were trained or fine-tuned.
+The deployed pilot has 69 reviewed source records and 27 articles. The
+[October 24 expansion](experiments/2026-10-24-broader-memory-sample.md) adds broader
+historical correspondence from a seeded mailbox/year sample, retaining the
+original 33 sources and nine articles unchanged. It supports retrieval of curated
+personal history, including three recurring-event instances; it does not
+autonomously reconstruct that history from the raw archive. No model weights
+were trained or fine-tuned. Broader answer quality remains an experimental limit.
 
 | Layer | Implemented boundary | Remaining qualification |
 | --- | --- | --- |
 | Running service | Generic validation, search, source/article readers, dates, series links and explicit publication | No school, ski-trip or travel-provider-specific memory rules; answer faithfulness remains inconsistent |
 | Reusable ingestion | Bounded catalogs, normalization, configurable lead selection and event-link suggestions | Observation extraction and membership require semantic review |
-| Experiment inputs | Private topic selectors, user-provided leads and coding-agent curation | The chosen topic and expected answers influenced development |
+| Experiment inputs | Private topic selectors, user-provided leads, seeded mailbox/year samples and coding-agent curation | Earlier topics and expected answers influenced development; broader sampling does not make curation automatic |
 | Published knowledge | Explicitly accepted source-grounded records and articles | Topic-specific knowledge is intentional data, not proof of generic automatic synthesis |
 | Evaluation | Isolated offline stores and separately recorded live verification | Current trip cases are development/regression cases, not untouched validation |
 
@@ -114,7 +117,13 @@ category exclusion or durable-memory relevance policy has been selected.
 
 ## Reviewed live pilot
 
-The current expansion contains 33 reviewed source records and nine articles in
+The current bundle is `broad-history-20261024`, with 69 reviewed sources and 27
+articles. The private acceptance review is bound to its exact snapshot, all
+retained original byte ranges were verified, and the previous pointer is saved
+for rollback. See the [broader sample record](experiments/2026-10-24-broader-memory-sample.md)
+for sampling, comparison and live verification limits.
+
+The October 23 expansion contains 33 reviewed source records and nine articles in
 `server/data/vault/knowledge/bundles/recurring-events-20261023/`. The original
 five-source pilot remains as an older immutable bundle. The active pointer
 is `server/data/vault/knowledge/current.json`; the machine's ignored inference
@@ -170,6 +179,23 @@ status. Bank/card adapters and automatic observation extraction are not implemen
 
 ## Next implementation boundary
 
+The immediate agreed experiment is **synthesis and prioritization over the
+existing 69-source/27-article bundle**, before another volume increase. A subsequent
+live overview completed and showed broader recall, but summarized the flat
+inventory without recorded article reads, mixing major life themes with minor
+episodes and adding unsupported qualifications. See the
+[live-feedback findings](experiments/2026-10-24-broader-memory-sample.md#subsequent-live-feedback-breadth-versus-significance).
+
+Compare evidence-backed thematic overviews with the current index-level baseline.
+Connect individual events to broader relationships, activities or ongoing plans
+where supported; retain episode detail for targeted questions. Article count and
+index position must not substitute for significance. Lasting relevance, explicit
+user emphasis, recurrence and consequences are proposed signals, not implemented
+ranking rules. Preserve source roles, dates and uncertainty in the synthesis.
+Test broad questions, detail requests and follow-ups together; do not improve a
+summary by losing access to smaller records or promoting plans to confirmed facts.
+No new synthesis or importance mechanism has been deployed.
+
 The [memory-faithfulness follow-up](experiments/2026-10-23-memory-faithfulness.md)
 separates normal retrieval, supplied articles and complete-source answering.
 Local answers still fail with complete evidence. A bounded source-context
@@ -186,7 +212,7 @@ normalization failure. Coding-agent authorship and review are explicit; independ
 human validation remains pending. Fuller evidence improved payment qualifications
 on the small local comparison but did not solve correction chronology.
 
-The next milestone is a frozen evaluation on previously untouched real topics.
+The independent-validation milestone remains a frozen evaluation on previously untouched real topics.
 Use independently prepared source-backed expected findings, retain the first
 results and failures, and move a case into development/regression once it informs
 a change. The existing trip examples and fictional fixtures do not establish
