@@ -32,12 +32,16 @@ from entourage_server.llama_cpp import LlamaCpp
 from entourage_server.gemini import Gemini
 from evaluation_gemini import evaluation_key
 from memory_validation import digest, freeze, verify, write_new
+from memory_overview import load_overview, overview_evidence
 
 MODES = ("retrieval", "articles", "sources")
+OVERVIEW_MODES = ("inventory", "flat_overview", "thematic_overview")
 
 
-def supplied_evidence(bundle, case, mode):
+def supplied_evidence(bundle, case, mode, overview=None):
     """Use explicit case selectors, never expected answers or model-selected IDs."""
+    if mode in OVERVIEW_MODES:
+        return overview_evidence(bundle, overview, mode, case.get("diagnostic_articles", []))
     if mode not in MODES:
         raise ValueError("Unknown evidence mode")
     if mode == "retrieval":
@@ -94,9 +98,9 @@ class TimedModel:
             return await self.model.finalize(messages, on_text)
 
 
-async def run_diagnostic(case, settings, model, bundle_path, mode, *, on_progress=None):
+async def run_diagnostic(case, settings, model, bundle_path, mode, *, on_progress=None, overview=None):
     bundle = ReviewedKnowledge(bundle_path)
-    evidence = supplied_evidence(bundle, case, mode)
+    evidence = supplied_evidence(bundle, case, mode, overview)
     if mode == "retrieval":
         return await evaluation.run_case(case, settings, model, knowledge_bundle=bundle_path, on_progress=on_progress)
 
@@ -134,13 +138,19 @@ async def run(args):
     fixture = evaluation.load_cases(args.fixture)
     bundle = ReviewedKnowledge(args.bundle)
     settings = replace(evaluation.live_settings(), knowledge_enabled=True)
+    overview_path = getattr(args, "overview", None)
+    overview = load_overview(overview_path) if overview_path else None
     # Validate every selector and evidence size before any inference call.
     for case in fixture["cases"]:
         for mode in args.modes:
-            supplied_evidence(bundle, case, mode)
+            supplied_evidence(bundle, case, mode, overview)
     manifest = freeze(ROOT, args.bundle, args.fixture, args.expected, settings,
                       providers=args.providers, repeats=args.repeats, gemini_model=args.gemini_model)
     manifest["files"][str(Path(__file__).resolve())] = digest(Path(__file__))
+    manifest["files"][str((ROOT / "scripts/memory_overview.py").resolve())] = digest(ROOT / "scripts/memory_overview.py")
+    if overview_path:
+        manifest["files"][str(overview_path.resolve())] = digest(overview_path)
+        manifest["overview_sha256"] = digest(overview_path)
     manifest["diagnostic_modes"] = args.modes
     manifest["evidence_format"] = "user_data"
     manifest["inference_timeout_seconds"] = args.inference_timeout
@@ -151,6 +161,7 @@ async def run(args):
               "freeze_manifest_sha256": digest(args.output / "freeze.json"),
               "settings": manifest["settings"], "planned_runs": manifest["planned_runs"],
               "diagnostic_modes": args.modes, "evidence_format": "user_data", "runs": [], "semantic_review": "pending",
+              "overview_sha256": manifest.get("overview_sha256"),
               "inference_timeout_seconds": args.inference_timeout,
               "scope": "Interleaved diagnostic conditions. Supplied articles/sources bypass discovery and worker tool budgets; not production quality scores."}
 
@@ -181,7 +192,8 @@ async def run(args):
                             def progress(value):
                                 report["active_run"] = {"provider": provider, "repeat": repeat, "mode": mode, **value}
                                 save()
-                            row = await run_diagnostic(case, settings, model, args.bundle, mode, on_progress=progress)
+                            row = await run_diagnostic(case, settings, model, args.bundle, mode,
+                                                       on_progress=progress, overview=overview)
                             row.update(provider=provider, repeat=repeat, mode=mode)
                             report["runs"].append(row)
                             report.pop("active_run", None)
@@ -207,12 +219,16 @@ def main():
     for name in ("bundle", "fixture", "expected", "output"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--providers", nargs="+", choices=("local", "gemini"), default=["local"])
-    parser.add_argument("--modes", nargs="+", choices=MODES, default=list(MODES))
+    parser.add_argument("--modes", nargs="+", choices=MODES + OVERVIEW_MODES, default=list(MODES))
+    parser.add_argument("--overview", type=Path,
+                        help="Snapshot-bound experimental theme plan; required for overview modes")
     parser.add_argument("--repeats", type=int, choices=(1, 2, 3), default=2)
     parser.add_argument("--gemini-model", default="gemini-4-argon")
     parser.add_argument("--inference-timeout", type=float, default=90,
                         help="Per-inference deadline in seconds, including provider streaming")
     args = parser.parse_args()
+    if any(mode in OVERVIEW_MODES for mode in args.modes) and args.overview is None:
+        parser.error("Overview modes require --overview")
     if len(set(args.modes)) != len(args.modes) or len(set(args.providers)) != len(args.providers):
         parser.error("Modes and providers must be unique")
     if not 0.1 <= args.inference_timeout <= 300:

@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "status": "accepted",
+  "snapshot": "02c133675807fba7d6d4d7c2c613b01eb1ff9309db39ea0ab48c2b76c64c5b29",
+  "reviewer_kind": "coding_agent",
+  "reviewer": "Entourage fictional regression author",
+  "reviewed_at": "2026-10-25T09:38:57.841424+00:00",
+  "notes": "Fictional development data derived from known attribution failures, not independent validation. Preserve blank participant, unread attachment, dates and missing current status. No real memory is published."
+}

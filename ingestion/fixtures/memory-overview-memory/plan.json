@@ -1,0 +1,162 @@
+{
+  "version": 1,
+  "articles": [
+    {
+      "slug": "community-garden",
+      "type": "concept",
+      "title": "Community garden",
+      "description": "Workday announcements and changes.",
+      "claims": [
+        {
+          "type": "source_statement",
+          "text": "The first invitation proposed May 3; a later correction moved the planned workday to May 10.",
+          "evidence": [
+            {
+              "record_id": "garden-invite",
+              "quote": "The garden workday is planned for May 3. Please bring gloves."
+            },
+            {
+              "record_id": "garden-correction",
+              "quote": "Correction: the garden workday has moved from May 3 to May 10."
+            }
+          ]
+        },
+        {
+          "type": "suggestion",
+          "text": "Check for later changes before planning attendance.",
+          "evidence": [
+            {
+              "record_id": "garden-correction",
+              "quote": "Correction: the garden workday has moved from May 3 to May 10."
+            }
+          ]
+        }
+      ],
+      "unknowns": [
+        "Attendance and whether the workday happened are not established."
+      ],
+      "links": []
+    },
+    {
+      "slug": "bicycle-maintenance",
+      "type": "concept",
+      "title": "Bicycle maintenance",
+      "description": "Documented service items.",
+      "claims": [
+        {
+          "type": "source_statement",
+          "text": "The receipt lists replacement brake pads and a chain adjustment.",
+          "evidence": [
+            {
+              "record_id": "bicycle-repair",
+              "quote": "The receipt lists replacement brake pads and a chain adjustment."
+            }
+          ]
+        }
+      ],
+      "unknowns": [
+        "The next service interval is not established."
+      ],
+      "links": []
+    },
+    {
+      "slug": "reading-circle-june-2025",
+      "type": "instance",
+      "title": "Reading circle June 2025",
+      "description": "A proposed meeting and preparation.",
+      "claims": [
+        {
+          "type": "source_statement",
+          "text": "An invitation lists June 6 at the library.",
+          "evidence": [
+            {
+              "record_id": "reading-circle",
+              "quote": "The reading circle invitation lists June 6 at the library. Bring a book suggestion."
+            }
+          ]
+        },
+        {
+          "type": "suggestion",
+          "text": "Choose a book suggestion to bring if attending.",
+          "evidence": [
+            {
+              "record_id": "reading-circle",
+              "quote": "The reading circle invitation lists June 6 at the library. Bring a book suggestion."
+            }
+          ]
+        }
+      ],
+      "unknowns": [
+        "Attendance and any later schedule changes are not established."
+      ],
+      "links": []
+    },
+    {
+      "slug": "school-backpack",
+      "title": "School backpack correspondence",
+      "type": "concept",
+      "description": "In December 2023, Avery wrote about an optional mask in Alex's school backpack.",
+      "claims": [
+        {
+          "type": "source_statement",
+          "text": "In December 2023, Avery wrote about an optional mask in Alex's school backpack.",
+          "evidence": [
+            {
+              "record_id": "school-backpack",
+              "quote": "Avery wrote: I put an optional mask in Alex's school backpack."
+            }
+          ]
+        }
+      ],
+      "unknowns": [
+        "This does not establish current enrollment, a particular family relationship, or participation in other activities."
+      ],
+      "links": []
+    },
+    {
+      "slug": "camp-order",
+      "title": "Art Explorer camp order",
+      "type": "concept",
+      "description": "A June 2024 order records a four-day Art Explorer camp purchase for an advertised July 29-August 2 week; the participant field is blank.",
+      "claims": [
+        {
+          "type": "source_statement",
+          "text": "A June 2024 order records a four-day Art Explorer camp purchase for an advertised July 29-August 2 week; the participant field is blank.",
+          "evidence": [
+            {
+              "record_id": "camp-order",
+              "quote": "Art Explorer camp order confirmed. Participant name: [blank]. Advertised week: July 29-August 2, 2024. Purchase: Full Day 4 Days."
+            }
+          ]
+        }
+      ],
+      "unknowns": [
+        "The participant is not identified. Do not assign this purchase to Alex from a separate school note.",
+        "A purchase does not establish attendance, current activities, or resolve the advertised week versus four-day purchase."
+      ],
+      "links": []
+    },
+    {
+      "slug": "employment-letter",
+      "title": "Employment-verification correspondence",
+      "type": "concept",
+      "description": "In November 2021, Avery said an HR-signed Northstar employment-verification letter was being sent for a rental application.",
+      "claims": [
+        {
+          "type": "source_statement",
+          "text": "In November 2021, Avery said an HR-signed Northstar employment-verification letter was being sent for a rental application.",
+          "evidence": [
+            {
+              "record_id": "employment-letter",
+              "quote": "Avery wrote: I am sending an HR-signed Northstar employment-verification letter for my rental application. See attachment."
+            }
+          ]
+        }
+      ],
+      "unknowns": [
+        "The attachment was not processed. Its contents, salary, employment dates and current employment are not established."
+      ],
+      "links": []
+    }
+  ]
+}

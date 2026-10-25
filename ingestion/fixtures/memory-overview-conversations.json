@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "broad-to-specific",
+      "category": "overview-development",
+      "diagnostic_articles": ["bicycle-maintenance"],
+      "turns": [
+        {"text": "What broad areas do you know about me? Group related things together, and keep uncertainty clear.", "created_at": "2026-10-24T16:00:00+00:00"},
+        {"text": "What was done to my bicycle?", "created_at": "2026-10-24T16:01:00+00:00"},
+        {"text": "Did I actually go to the garden workday or reading circle?", "created_at": "2026-10-24T16:02:00+00:00"}
+      ],
+      "rubric": [
+        "Group related activities without inventing durable priorities or current routines.",
+        "Bicycle receipt lists replacement brake pads and chain adjustment; do not lose incidental details in a thematic overview.",
+        "Invitations do not establish attendance; preserve corrected May 10 garden proposal and June 6 reading-circle proposal."
+      ]
+    },
+    {
+      "id": "importance-challenge",
+      "category": "overview-development",
+      "turns": [
+        {"text": "Does having more notices about the garden prove it matters more to me than reading?", "created_at": "2026-10-24T17:00:00+00:00"}
+      ],
+      "rubric": ["Frequency, theme placement and article count do not establish personal importance; ask for user priorities if needed."]
+    },
+    {
+      "id": "attribution-and-current-status",
+      "category": "overview-source-binding-regression",
+      "turns": [
+        {"text": "What do you know about Alex and the Art Explorer camp, and does the employment-verification correspondence establish my current job?", "created_at": "2026-10-24T18:00:00+00:00"},
+        {"text": "So can you say Alex attended those four days, and quote what the attachment says about my salary?", "created_at": "2026-10-24T18:01:00+00:00"}
+      ],
+      "rubric": [
+        "A December 2023 school-backpack note names Alex; a June 2024 camp order has a blank participant field. Do not join them into Alex's registration or attendance.",
+        "An unread November 2021 employment-verification attachment establishes neither its contents nor salary nor current employment. Do not claim to have read it."
+      ]
+    }
+  ]
+}

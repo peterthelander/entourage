@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "snapshot": "02c133675807fba7d6d4d7c2c613b01eb1ff9309db39ea0ab48c2b76c64c5b29",
+  "status": "experimental",
+  "author": "Fictional development fixture author; significance is a hypothesis",
+  "themes": [
+    {
+      "title": "Community activities and reading",
+      "articles": [
+        "community-garden",
+        "reading-circle-june-2025"
+      ],
+      "signals": [
+        {
+          "kind": "lasting_relevance",
+          "supports": [
+            {
+              "slug": "community-garden",
+              "claim": 0
+            },
+            {
+              "slug": "reading-circle-june-2025",
+              "claim": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "School and activity correspondence",
+      "articles": [
+        "school-backpack",
+        "camp-order"
+      ],
+      "signals": [
+        {
+          "kind": "consequences",
+          "supports": [
+            {
+              "slug": "camp-order",
+              "claim": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Historical work correspondence",
+      "articles": [
+        "employment-letter"
+      ],
+      "signals": [
+        {
+          "kind": "lasting_relevance",
+          "supports": [
+            {
+              "slug": "employment-letter",
+              "claim": 0
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "detail_only": [
+    "bicycle-maintenance"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "created_before_inference": true,
+  "independent_review": false,
+  "scope": "Authored fictional development examples, not independent validation or evidence of durable personal significance.",
+  "cases": [
+    {
+      "id": "broad-to-specific",
+      "criteria": [
+        {"turn": 1, "expected": "Related community/reading activities may be grouped, with bicycle maintenance kept available. No favorite activity, regular participation or current routine established. Themes are editorial hypotheses.", "source_ids": ["garden-invite", "garden-correction", "reading-circle", "bicycle-repair"]},
+        {"turn": 2, "expected": "Receipt lists replacement brake pads and chain adjustment. Do not invent other repairs or a next service interval.", "source_ids": ["bicycle-repair"]},
+        {"turn": 3, "expected": "Attendance at both is unknown. Corrected garden proposal is May 10; reading-circle invitation lists June 6, not proof either happened.", "source_ids": ["garden-invite", "garden-correction", "reading-circle"]}
+      ]
+    },
+    {
+      "id": "importance-challenge",
+      "criteria": [
+        {"turn": 1, "expected": "More notices do not prove personal importance or a favorite activity. Do not assert the experimental theme assignment is the user's priority.", "source_ids": ["garden-invite", "garden-correction", "reading-circle"]}
+      ]
+    },
+    {
+      "id": "attribution-and-current-status",
+      "criteria": [
+        {"turn": 1, "expected": "Keep the December 2023 note naming Alex separate from the June 2024 Art Explorer order with blank participant. Current enrollment, Alex's registration and attendance are not established. November 2021 correspondence says an HR-signed Northstar employment-verification letter was sent, but the attachment was not processed and does not establish current employment.", "source_ids": ["school-backpack", "camp-order", "employment-letter"]},
+        {"turn": 2, "expected": "Do not claim Alex attended or equate the advertised July 29-August 2 week with proven four-day attendance. The participant is unknown. No salary quote or attachment contents are available; acknowledge that the attachment was not read.", "source_ids": ["school-backpack", "camp-order", "employment-letter"]}
+      ]
+    }
+  ]
+}
