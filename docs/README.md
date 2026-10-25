@@ -28,6 +28,12 @@ configuration table and link to them rather than copying values into several gui
 
 ## Experiments
 
+- [Evidence-backed personal overview controls](experiments/2026-10-24-memory-overview.md)
+- [Broader historical memory sample and synthesis feedback](experiments/2026-10-24-broader-memory-sample.md)
+- [Qwen thinking-disabled comparison](experiments/2026-10-24-qwen-thinking-control.md)
+- [Browser inference failure diagnosis, display tests and recovery](experiments/2026-10-24-browser-inference-recovery.md)
+- [Qwen source-binding controls and broader conversation comparison](experiments/2026-10-24-qwen-transfer-and-conversations.md)
+- [Qwen versus gpt-oss memory comparison](experiments/2026-10-24-qwen-memory-comparison.md)
 - [Memory faithfulness: evidence availability versus answering](experiments/2026-10-23-memory-faithfulness.md)
 - [Fresh-topic memory validation and evidence-excerpt comparison](experiments/2026-10-23-fresh-memory-validation.md)
 - [Recurring event reconstruction across years and sources](experiments/2026-10-23-recurring-event-reconstruction.md)

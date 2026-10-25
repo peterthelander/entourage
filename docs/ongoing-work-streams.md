@@ -1,12 +1,59 @@
 # Ongoing work streams
 
 Status: Active development overview; next steps are proposals, not scheduled work.
-Updated: October 23, 2026.
+Updated: October 25, 2026.
 
 The goal is a capable personal agent with natural conversation, useful recall and
 reliable tools. These work streams connect everyday use, evaluation and targeted
 experiments. Detailed findings belong in experiment records; implementation
 limitations belong in the [technical backlog](technical-debt.md).
+
+## Current state, October 25
+
+The supported browser -> HP Python service -> Mac llama.cpp path is running
+Qwen3.8-27B Q4_K_M with low thinking, a 16,384-token context and a 2,048-token
+output allowance. Model identity is verified separately from service health.
+Machine addresses, startup details and backups remain in the ignored local runbook.
+
+The reported browser failures are repaired: strict-template finalization, context
+pressure handling, stale model labeling and cause-specific error messages. A
+phone-width retry and authenticated Tailscale calculator check succeeded. The
+regression suite passes 163 Python tests and 46 JavaScript tests, plus lint and
+typecheck. Rendered component and hook tests cover the display and refresh
+behavior; automated pixel screenshot comparison is not implemented. See the
+[recovery record](experiments/2026-10-24-browser-inference-recovery.md).
+
+The model comparison and thinking-disabled experiment are complete. Disabling
+thinking reduced broader-suite median latency from 20.027 to 11.642 seconds,
+but full-case rubric passes fell from 25/30 to 24/30 and thinking-marker leaks
+increased from one answer to four. Keep thinking low. These exploratory results
+do not establish general reliability; see the
+[thinking-control record](experiments/2026-10-24-qwen-thinking-control.md).
+
+The reviewed memory expansion is live: 69 sources and 27 articles, retaining the
+previous 33 sources and nine articles. A seeded sample across mailbox/year strata
+broadened historical coverage to 2005–2026. Original source hashes, bounded readers
+and live retrieval through the phone's HTTPS route were verified. This is manual
+curation from a bounded sample, not autonomous or full-archive ingestion.
+
+Subsequent user feedback confirms richer recall, but the live overview mixed major
+life areas with incidental episodes and added unsupported inferences. Its sole
+recorded call read the flat inventory, not the supporting articles or journal
+contents. The immediate agreed next experiment is thematic synthesis and
+question-appropriate prioritization over the existing memory before another
+volume increase. No synthesis or importance-ranking change has been implemented.
+An [offline overview comparison](experiments/2026-10-24-memory-overview.md) now
+separates inventory-only answers, complete selected article evidence, and the
+same evidence with snapshot-bound editorial themes. This is experimental tooling,
+not a live synthesis layer or automatic significance ranking.
+Its completed first comparison did not justify adopting the thematic candidate:
+both evidence conditions still overclaimed in broad overviews and timed out on
+the first follow-up. A supplied-evidence detail control passed without grouping;
+the grouped answer recovered the facts but added an unsupported attendance
+inference. Retain the controls and investigate source binding before expansion.
+Fresh-topic independent validation and latency that preserves answer quality
+remain cross-cutting priorities. See the
+[expansion and live feedback](experiments/2026-10-24-broader-memory-sample.md).
 
 ## 1. Evaluation quality and coverage
 
@@ -18,8 +65,9 @@ answers, tool evidence and source hashes.
 Next: turn observed failures into representative cases, retain a separate holdout
 set, and improve honesty, factuality and completion criteria. Add human review;
 keyword checks and unblinded coding-agent review are useful but incomplete.
-Extend coverage to long histories, context pressure and journal refresh as those
-become the subject of experiments. Avoid tuning the system to a fixed test set.
+Context-pressure, strict-template finalization, error-display and model-refresh
+regressions are now covered. Extend long-history and journal-refresh coverage as
+new failures are demonstrated. Avoid tuning the system to a fixed test set.
 
 The recurring-event memory examples have now informed source curation, ranking
 and date presentation. Treat them as development/regression cases. No untouched
@@ -106,23 +154,30 @@ still found unsupported and stale claims. Outputs are unpublished; model agreeme
 is not approval. A stronger reference reviewer helped on synthetic cases without
 changing the live model or adding automatic routing.
 
-As of October 23, an explicitly reviewed 33-source/nine-article expansion is
-published to the live Python service, with separate annual event histories and
-related lodging, transportation and purchase evidence. Unified search,
-snapshot-bound readers and bounded follow-up evidence are implemented. See the
-[recurring-event experiment](experiments/2026-10-23-recurring-event-reconstruction.md).
+The October 23 33-source/nine-article pilot supplied separate annual event
+histories and related evidence. The October 24 expansion adds 36 sources and
+18 articles from a broader seeded sample, for 69 sources and 27 articles live.
+Unified search, snapshot-bound readers and bounded follow-up evidence are
+implemented. See the [broader sample and limits](experiments/2026-10-24-broader-memory-sample.md)
+and earlier [recurring-event experiment](experiments/2026-10-23-recurring-event-reconstruction.md).
 The batch runner still produces unpublished candidates; automatic acceptance,
 incremental updates and full-archive ingestion remain future work.
 
-The service/reusable code is generic; the published history was assembled with
-topic-specific discovery, user hints and coding-agent curation. This demonstrates
+The service/reusable code is generic; earlier history used topic-specific
+discovery and user hints, while the latest sample used seeded mailbox/year
+selection. Both used coding-agent curation and review. This demonstrates
 useful retrieval over reviewed knowledge, not independent automatic reconstruction.
 User feedback reports a richer three-year summary, while controlled/live checks
 still show car-versus-ski-rental confusion, mixed years and current-status claims.
 
-Next: freeze the current implementation for an untouched-topic evaluation, score
-ingestion stages separately from answering, and diagnose source binding in
-follow-ups. Preserve the current cases as regressions. Larger-corpus ingestion,
+Next: compare evidence-backed thematic overviews with the flat-index baseline.
+Investigate lasting relevance, recurrence, explicit user emphasis and consequences
+as candidate significance signals, without imposing a fixed taxonomy or assuming
+frequent events are always important. Test broad summaries, detailed questions
+and follow-ups together, including attribution and historical/current status.
+Preserve these cases as development/regression material and retain untouched
+questions with independently prepared expectations for validation. Score
+ingestion separately from answering. Larger-corpus ingestion,
 real transaction adapters, attachments and consolidation follow bounded evidence
 of their usefulness; they are not implemented by the fictional transaction test.
 
@@ -142,8 +197,9 @@ Record improvements, regressions and inconclusive outcomes before deciding what
 to keep. A change without a score gain can still be justified by a demonstrated
 benefit such as maintainability; record that reason explicitly.
 
-The immediate proposed focus is independent memory validation and faithful use
-of retrieved sources, alongside remaining search stopping/recovery failures.
+The immediate agreed memory experiment is synthesis and prioritization over the
+expanded bundle. Independent validation, faithful source use and remaining search
+stopping/recovery failures remain part of that work.
 The [memory-faithfulness comparison](experiments/2026-10-23-memory-faithfulness.md)
 now separates evidence availability from answering. A bounded source-context
 candidate and a reconciliation prompt were rejected. Complete evidence still
@@ -154,6 +210,27 @@ adds frozen experiment/review tooling and a verified HTML ingestion fix. Its
 controlled local excerpt comparison improves payment qualifications but retains
 chronology errors; it is coding-agent-reviewed development evidence, not an
 independent holdout result.
+
+The [Qwen comparison](experiments/2026-10-24-qwen-memory-comparison.md) reran the
+frozen two-case diagnostic with Qwen3.8-27B Q4_K_M. All 24 turns completed;
+complete-source answers passed 7/8 versus the historical gpt-oss result of 2/8,
+while normal retrieval passed 4/8 versus 3/8. This supports further evaluation of
+the inference setup, not a production selection or independent generalization
+claim. Source identity, article qualifications and unsupported additions remain
+limitations. That experiment used process-local overrides; the later browser
+recovery aligned the live configuration with Qwen.
+
+The [transfer and broader conversation follow-up](experiments/2026-10-24-qwen-transfer-and-conversations.md)
+finds 15/16 Qwen control turns passing versus 12/16 historically, including both
+settled-receipt positive controls. On the matched first pass of 30 broader cases,
+Qwen passes 25 versus gpt-oss's 21, but median recorded turn time rises from
+2.186 to 20.027 seconds. All 45 turns were attempted; 44 completed. Recall gains
+coexist with finalization, unresolved-conflict, source-link and recap failures,
+plus a literal thinking-marker/duplicate-answer presentation defect. Repeated
+validation remains necessary before treating the observed gains as
+general. The later thinking-control experiment and deployment recovery are
+recorded above; this comparison itself did not change live settings.
+
 Evaluation coverage and everyday feedback should continue together. Update this
 overview when priorities or implementation status change. Keep machine configuration
 in the local runbook and detailed results in linked experiment records.

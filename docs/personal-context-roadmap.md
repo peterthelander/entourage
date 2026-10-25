@@ -1,6 +1,6 @@
 # Entourage: Personal Context & Memory Architecture Roadmap
 
-Status: Proposal with implemented milestones noted. Reviewed: October 23, 2026.
+Status: Proposal with implemented milestones noted. Reviewed: October 25, 2026.
 
 This document outlines the conceptual blueprint and technical strategy for implementing persistent, local-first memory in **Entourage**. The goal is to move beyond the artificial boundary of isolated chat threads, providing a unified, self-organizing knowledge base that operates transparently across personal devices.
 
@@ -113,7 +113,7 @@ To resolve user queries without bloating the active prompt context:
 
 1. **Daily journals (implemented):** Python exports shared-chat records into ignored `server/data/vault/journals/`. Entries preserve source references; execution-enabled services refresh them automatically and catch up on restart. Model summarization remains future work.
 2. **Retrieval (implemented baseline):** Python `searchMemories` returns bounded literal keyword/date matches with dated excerpts and source references. Automatic refresh retries failures and catches up after restart. Literal matching and small-model tool selection remain limitations.
-3. **Reviewed imported articles (small pilot implemented October 23, 2026):** Python owns explicit reviewed-bundle publication and bounded article/source tools. Unified memory search covers conversation journals and imports separately. The October 23 expansion has 33 reviewed sources and nine articles, including separate annual instances with activity periods and series links; this is not full-archive ingestion. Incremental updates and autonomous refactoring remain future work.
+3. **Reviewed imported articles (small pilot implemented October 23, expanded October 24, 2026):** Python owns explicit reviewed-bundle publication and bounded article/source tools. Unified memory search covers conversation journals and imports separately. The current expansion has 69 reviewed sources and 27 articles, including separate annual instances with activity periods and series links and broader historical correspondence selected across mailbox/year strata. This is manually curated memory from a bounded sample, not full-archive ingestion. See the [broader sample record](experiments/2026-10-24-broader-memory-sample.md). Incremental updates and autonomous refactoring remain future work.
 
 An isolated [generic candidate prototype](experiments/memory-candidate-contracts.md)
 now defines versioned source records and reviewed article plans, rendering imported
@@ -128,6 +128,26 @@ format failures and unsupported completion claims. A separately reviewed candida
 was rendered; no unedited model plan was accepted for live publication.
 
 ## 6. Next validation milestone and scope limits
+
+Following the October 24 expansion, the user confirmed that broader recall is
+useful but that open-ended summaries mix major life themes and incidental details.
+The immediate agreed next experiment is evidence-backed thematic synthesis and
+question-appropriate prioritization over the existing memory, before importing
+more content. See the [live feedback and proposed evaluation](experiments/2026-10-24-broader-memory-sample.md#subsequent-live-feedback-breadth-versus-significance).
+Durability, recurrence, explicit user importance and consequences are candidate
+signals to investigate, not implemented scoring or a fixed taxonomy. Preserve
+detailed event retrieval and distinguish index descriptions from inspected
+evidence. Automatic consolidation and importance ranking remain proposals.
+
+The [overview experiment](experiments/2026-10-24-memory-overview.md) now implements
+snapshot-bound candidate grouping and matched evidence controls in isolated
+evaluations. Selected articles preserve their full claims, quotations and unknowns;
+significance remains an explicitly reviewed hypothesis. No live publication or
+automatic consolidation is part of that tooling.
+The first comparison did not justify production adoption: grouping preserved
+detailed evidence but did not prevent unsupported broad claims or slow failed
+follow-ups. Continue source-binding experiments and independent review rather
+than treating thematic structure as a solved significance mechanism.
 
 The running code has no trip-specific rules. Trip names, providers and reviewed
 facts live in personal knowledge; private selectors and curation supplied the
