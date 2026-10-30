@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "created_before_inference": true,
+  "independent_review": false,
+  "scope": "Authored fictional mixed conversation/import development regression. Imported source_ids identify invitation evidence; the fixture's explicit dated user messages supply the later attendance report. Not independent validation or real personal history.",
+  "cases": [
+    {
+      "id": "return-and-correct-attendance",
+      "criteria": [
+        {"turn": 1, "expected": "Retrieve newer October 25 user report after the session boundary: user recalls attending May 10, 2025 and helping with planting. Older uncertainty and imported invitation unknowns do not erase that report. Attribute knowledge to user evidence rather than independently verified attendance.", "source_ids": ["garden-invite", "garden-correction"]},
+        {"turn": 2, "expected": "Invitation establishes a proposed workday, not attendance. The user's later recollection supplies attendance/activity. Companions and independent documentation remain unknown; do not invent guests or deny the user's report.", "source_ids": ["garden-invite", "garden-correction"]},
+        {"turn": 3, "expected": "Acknowledge watering as the corrected activity replacing planting. Do not claim an external write or update action was completed.", "source_ids": ["garden-invite", "garden-correction"]},
+        {"turn": 4, "expected": "User reports attending May 10, 2025 and helping with watering; planting is superseded. October 25/26 are recollection/correction dates, not workday dates. Companions and independent confirmation remain unknown. Preserve user-reported knowledge without promoting invitation evidence to proof.", "source_ids": ["garden-invite", "garden-correction"]}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "description": "Fictional cross-session user reports layered over reviewed invitation evidence. No real personal history.",
+  "cases": [
+    {
+      "id": "return-and-correct-attendance",
+      "category": "mixed-memory-continuity-development",
+      "memories": [
+        {"role": "user", "text": "I am not sure whether I attended the community garden workday on May 10, 2025.", "created_at": "2026-10-24T12:00:00+00:00"},
+        {"role": "user", "text": "Update about the community garden workday on May 10, 2025: I can now confirm I went and helped with planting. That is my recollection; I have not supplied receipts or photos. I have not said who came with me.", "created_at": "2026-10-25T12:00:00+00:00"}
+      ],
+      "history": [
+        {"role": "user", "text": "I am not sure whether I attended the community garden workday on May 10, 2025.", "created_at": "2026-10-24T12:00:00+00:00"},
+        {"role": "assistant", "text": "Attendance is not yet established by the invitation.", "created_at": "2026-10-24T12:01:00+00:00"}
+      ],
+      "turns": [
+        {"text": "Let's return to the community garden workday. Did I go, and what did I do?", "created_at": "2026-10-26T12:00:00+00:00", "required_tools": ["searchMemories"], "forbidden_tools": ["searchWeb", "readWebPage"]},
+        {"text": "Does the original invitation establish that, and do you know who came with me?", "created_at": "2026-10-26T12:01:00+00:00", "forbidden_tools": ["searchWeb", "readWebPage"]},
+        {"text": "Correction: I helped with watering, not planting.", "created_at": "2026-10-26T12:02:00+00:00", "forbidden_tools": ["searchWeb", "readWebPage"]},
+        {"text": "So what can we say happened, and what remains unknown?", "created_at": "2026-10-26T12:03:00+00:00", "forbidden_tools": ["searchWeb", "readWebPage"]}
+      ],
+      "rubric": [
+        "Recover the newer user report after the inactivity boundary: user says they attended May 10, 2025 and helped with planting. Do not let the older uncertainty or imported invitation erase that report.",
+        "Attribute attendance/activity to the user's October 25 recollection, not the original invitation. Independent confirmation and companions remain unknown; do not invent them.",
+        "Accept current correction to watering, superseding planting. Do not claim an external memory write or action occurred.",
+        "Preserve user-reported attendance and corrected watering; planting is superseded. Preserve event date versus recollection date and unknown companions/independent verification. Do not abstain about established user statements."
+      ]
+    }
+  ]
+}

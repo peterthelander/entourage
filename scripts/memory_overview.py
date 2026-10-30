@@ -79,9 +79,9 @@ def validate_overview(plan, bundle):
 
 
 def overview_evidence(bundle, plan, mode, detail_articles=()):
-    """Only grouping/ordering differs between flat and thematic evidence controls."""
+    """Build evidence controls varying grouping or uninspected-index visibility."""
     plan = validate_overview(plan, bundle)
-    require(mode in {"inventory", "flat_overview", "thematic_overview"}, "Unknown overview mode")
+    require(mode in {"inventory", "flat_overview", "thematic_overview", "selected_overview"}, "Unknown overview mode")
     inventory = [{"slug": slug, "title": a["title"], "description": a["description"]}
                  for slug, a in sorted(bundle.articles.items())]
     require(isinstance(detail_articles, (list, tuple))
@@ -128,6 +128,10 @@ def overview_evidence(bundle, plan, mode, detail_articles=()):
     if mode == "thematic_overview":
         result.update(themes=plan["themes"], detail_only=plan["detail_only"],
                       grouping_author=plan["author"], grouping_status="experimental")
+    if mode == "selected_overview":
+        result["inventory"] = []
+        result["scope"] = ("Only this reviewed imported bundle; no conversation contents or full archive supplied. "
+                           "Selected articles are supplied in full; uninspected index entries are withheld.")
     size = len(json.dumps(result, ensure_ascii=False).encode("utf-8"))
     require(size <= MAX_BYTES, "Overview exceeds 64000-byte diagnostic budget; use a smaller frozen bundle")
     return [{"reader": mode, "result": result}]

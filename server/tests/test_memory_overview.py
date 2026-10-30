@@ -42,6 +42,14 @@ class MemoryOverviewTests(unittest.TestCase):
             path.write_text(json.dumps(self.plan), encoding="utf-8")
             self.assertEqual(load_overview(path), self.plan)
 
+    def test_selected_overview_withholds_index_without_losing_inspected_evidence(self):
+        flat = overview_evidence(self.bundle, self.plan, "flat_overview")[0]["result"]
+        selected = overview_evidence(self.bundle, self.plan, "selected_overview")[0]["result"]
+        self.assertEqual(selected["inventory"], [])
+        self.assertIn("uninspected index entries are withheld", selected["scope"])
+        self.assertEqual({k: v for k, v in flat.items() if k not in {"inventory", "scope"}},
+                         {k: v for k, v in selected.items() if k not in {"inventory", "scope"}})
+
     def test_detail_control_adds_complete_evidence_in_both_conditions(self):
         for mode in ("flat_overview", "thematic_overview"):
             result = overview_evidence(self.bundle, self.plan, mode, ["bicycle-maintenance"])[0]["result"]

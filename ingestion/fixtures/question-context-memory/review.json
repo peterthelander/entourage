@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "status": "accepted",
+  "snapshot": "4fb36e6b8d97af5411061e715577d1bc491c31bbd2c95f8fbade3913fccaef99",
+  "reviewer": "Fictional adversarial regression fixture author",
+  "reviewer_kind": "coding_agent",
+  "reviewed_at": "2026-10-28T12:00:00+00:00",
+  "notes": "Synthetic source contains an adversarial instruction deliberately. It is untrusted source data, never an instruction to the agent. Canonical article quotes preserve the service facts; unquoted rebate paragraph tests follow-up evidence selection. No live publication."
+}

@@ -15,6 +15,35 @@ BUNDLE = ROOT / 'ingestion/fixtures/source-binding-memory'
 
 
 class MemoryDiagnosisTests(unittest.TestCase):
+    def test_coverage_condition_changes_only_reader_metadata_and_restores_reader(self):
+        from entourage_server.knowledge_bundle import KnowledgeBundle
+        original = KnowledgeBundle.read_article
+        snapshot = ReviewedKnowledge(BUNDLE).snapshot
+        assertions = self
+
+        class Model:
+            calls = 0
+
+            async def generate(self, messages, on_text):
+                self.calls += 1
+                if self.calls == 1:
+                    return {'content': '', 'tool_calls': [{'id': 'article', 'type': 'function', 'function': {
+                        'name': 'readKnowledgeArticle', 'arguments': json.dumps({'slug': 'cedar-pantry', 'snapshot': snapshot})}}]}
+                tool = next(m for m in messages if m['role'] == 'tool')
+                data = json.loads(tool['content'])
+                assertions.assertIn('source_coverage', data)
+                assertions.assertEqual(data['article'], ReviewedKnowledge(BUNDLE).read_article('cedar-pantry')['article'])
+                return {'content': 'Final delivery and payment unknown.', 'tool_calls': []}
+
+        case = {'id': 'coverage', 'rubric': ['Preserve source coverage'], 'turns': [
+            {'text': 'What changed?', 'created_at': '2026-10-26T10:00:00+00:00'},
+            {'text': 'Was it completed?', 'created_at': '2026-10-26T10:01:00+00:00'}]}
+        self.assertEqual(diagnosis.supplied_evidence(ReviewedKnowledge(BUNDLE), case, 'retrieval_coverage'), [])
+        row = asyncio.run(diagnosis.run_diagnostic(case, Settings(), Model(), BUNDLE, 'retrieval_coverage'))
+        self.assertTrue(all(t['status'] == 'completed' for t in row['turns']))
+        self.assertIs(KnowledgeBundle.read_article, original)
+        self.assertNotIn('source_coverage', ReviewedKnowledge(BUNDLE).read_article('cedar-pantry'))
+
     def test_selected_sources_are_complete_and_chronological(self):
         bundle = ReviewedKnowledge(BUNDLE)
         messages = diagnosis.supplied_evidence(bundle, {'diagnostic_articles': ['cedar-pantry']}, 'sources')

@@ -8,6 +8,7 @@ Start with the [project README](../README.md). Coding agents also follow [AGENTS
 - [Design principles](design-principles.md)
 - [Technical debt and remaining work](technical-debt.md)
 - [Personal context and memory roadmap](personal-context-roadmap.md)
+- [Personal memory: bounded milestone outcome and deferred roadmap](personal-memory-development.md)
 - [Memory ingestion status, ownership and next validation](memory-ingestion.md)
 - [Batch ingestion experiment workspace](../ingestion/README.md)
 - [Recursive self-improvement ideas](recursive-self-improvement.md)
@@ -28,6 +29,12 @@ configuration table and link to them rather than copying values into several gui
 
 ## Experiments
 
+- [Bounded memory-context acceptance decision, October 30 (closed)](experiments/2026-10-30-memory-milestone.md)
+- [Memory coverage, return/correction and index controls, October 28](experiments/2026-10-28-personal-memory.md)
+- [Current-model personal-memory diagnostics and context trials](experiments/2026-10-26-personal-memory.md)
+- [Qwen122 selection decision and comparison (closed)](experiments/2026-10-26-qwen122-comparison.md)
+- [Current-service Qwen27 baseline versus Coder-Next](experiments/2026-10-26-qwen-current-baseline.md)
+- [Coder-Next versus earlier inference setups](experiments/2026-10-25-coder-next-comparison.md)
 - [Evidence-backed personal overview controls](experiments/2026-10-24-memory-overview.md)
 - [Broader historical memory sample and synthesis feedback](experiments/2026-10-24-broader-memory-sample.md)
 - [Qwen thinking-disabled comparison](experiments/2026-10-24-qwen-thinking-control.md)

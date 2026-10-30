@@ -28,20 +28,26 @@ evaluation = knowledge_evaluation.evaluation
 
 from entourage_server.agent import build_context
 from entourage_server.knowledge import ReviewedKnowledge
+from entourage_server.knowledge_bundle import KnowledgeBundle
 from entourage_server.llama_cpp import LlamaCpp
 from entourage_server.gemini import Gemini
 from evaluation_gemini import evaluation_key
 from memory_validation import digest, freeze, verify, write_new
 from memory_overview import load_overview, overview_evidence
+from memory_source_coverage import article_source_coverage
+from memory_context import prepare_context
 
 MODES = ("retrieval", "articles", "sources")
-OVERVIEW_MODES = ("inventory", "flat_overview", "thematic_overview")
+OVERVIEW_MODES = ("inventory", "flat_overview", "thematic_overview", "selected_overview")
+CONTEXT_MODES = ("retrieval_coverage", "retrieval_context")
 
 
 def supplied_evidence(bundle, case, mode, overview=None):
     """Use explicit case selectors, never expected answers or model-selected IDs."""
     if mode in OVERVIEW_MODES:
         return overview_evidence(bundle, overview, mode, case.get("diagnostic_articles", []))
+    if mode in CONTEXT_MODES:
+        return []
     if mode not in MODES:
         raise ValueError("Unknown evidence mode")
     if mode == "retrieval":
@@ -103,6 +109,20 @@ async def run_diagnostic(case, settings, model, bundle_path, mode, *, on_progres
     evidence = supplied_evidence(bundle, case, mode, overview)
     if mode == "retrieval":
         return await evaluation.run_case(case, settings, model, knowledge_bundle=bundle_path, on_progress=on_progress)
+    if mode == "retrieval_context":
+        def candidate(prompt, history, settings=None, *, created_at=None):
+            return prepare_context(prompt, history, settings, created_at=created_at, knowledge_bundle=bundle)
+
+        with patch("entourage_server.agent.build_context", candidate):
+            return await evaluation.run_case(case, settings, model, knowledge_bundle=bundle_path, on_progress=on_progress)
+    if mode == "retrieval_coverage":
+        original = KnowledgeBundle.read_article
+
+        def read(reader, slug):
+            return article_source_coverage(reader, original(reader, slug))
+
+        with patch.object(KnowledgeBundle, "read_article", read):
+            return await evaluation.run_case(case, settings, model, knowledge_bundle=bundle_path, on_progress=on_progress)
 
     def context(*args, **kwargs):
         messages = build_context(*args, **kwargs)
@@ -148,6 +168,8 @@ async def run(args):
                       providers=args.providers, repeats=args.repeats, gemini_model=args.gemini_model)
     manifest["files"][str(Path(__file__).resolve())] = digest(Path(__file__))
     manifest["files"][str((ROOT / "scripts/memory_overview.py").resolve())] = digest(ROOT / "scripts/memory_overview.py")
+    manifest["files"][str((ROOT / "scripts/memory_source_coverage.py").resolve())] = digest(ROOT / "scripts/memory_source_coverage.py")
+    manifest["files"][str((ROOT / "scripts/memory_context.py").resolve())] = digest(ROOT / "scripts/memory_context.py")
     if overview_path:
         manifest["files"][str(overview_path.resolve())] = digest(overview_path)
         manifest["overview_sha256"] = digest(overview_path)
@@ -219,7 +241,8 @@ def main():
     for name in ("bundle", "fixture", "expected", "output"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--providers", nargs="+", choices=("local", "gemini"), default=["local"])
-    parser.add_argument("--modes", nargs="+", choices=MODES + OVERVIEW_MODES, default=list(MODES))
+    parser.add_argument("--modes", nargs="+", choices=MODES + OVERVIEW_MODES + CONTEXT_MODES, default=list(MODES),
+                        help="Diagnostic conditions; retrieval_context opts into the unadopted context candidate. Defaults are unchanged.")
     parser.add_argument("--overview", type=Path,
                         help="Snapshot-bound experimental theme plan; required for overview modes")
     parser.add_argument("--repeats", type=int, choices=(1, 2, 3), default=2)

@@ -18,7 +18,7 @@ def main():
     parser.add_argument("--bundle", type=Path, required=True)
     parser.add_argument("--overview", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--mode", choices=("inventory", "flat_overview", "thematic_overview"),
+    parser.add_argument("--mode", choices=("inventory", "flat_overview", "thematic_overview", "selected_overview"),
                         default="thematic_overview")
     parser.add_argument("--detail-article", action="append", default=[])
     args = parser.parse_args()

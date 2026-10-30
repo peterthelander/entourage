@@ -1,7 +1,11 @@
 # Conversation evaluation suite
 
-Status: Implemented evaluation harness; model quality remains under evaluation.
-Updated: October 23, 2026 (initial guide October 21).
+Status: Implemented evaluation harness; current model-selection round closed.
+Updated: October 26, 2026 (initial guide October 21).
+
+The owner selected **Qwen3.5-122B-A10B UD-IQ3_S** for now on October 26.
+See the [decision and comparison record](2026-10-26-qwen122-comparison.md).
+The harness remains available for future work; no further model comparison is pending.
 
 See the [initial repeated baseline](2026-10-21-conversation-baseline.md) for
 observed retrieval and unsupported-event-selection failures.
@@ -44,6 +48,18 @@ The frozen broader suite is `server/tests/fixtures/personal-agent-comparison.jso
 (30 cases, 45 user turns per complete repeat). Select it with `--fixture`; the
 original seven-case default and ten-case snapshot remain for regression/history.
 See the [October 22 model-comparison protocol](2026-10-22-model-comparison.md).
+
+For model-selection comparisons, use three complete repeats per setup: **30
+distinct scenarios × 3 repeats = 90 case runs and 135 user turns**. Ninety case
+runs are not ninety distinct scenarios. Report both the per-repeat score out of
+30 and the aggregate out of 90; retain failed and skipped attempts. Smaller
+exploratory runs remain useful, but label their actual repeat count and do not
+present them as a completed three-repeat comparison. Historical one-repeat
+results need two additional repeats, not an extrapolated score out of 90.
+Matching repeat counts does not remove differences in prompts, service revisions,
+templates, sampling or engine settings; record those separately. Additional
+repeats collected later must retain their dates and original report identities.
+
 In the broader suite, message-ID checks are `diagnostic_checks` and do not affect
 the product-level mechanical pass. Product rubrics still require review of the
 actual answers and tool evidence. Correct answers can fail a mechanical no-tool

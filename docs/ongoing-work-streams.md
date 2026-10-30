@@ -1,18 +1,32 @@
 # Ongoing work streams
 
 Status: Active development overview; next steps are proposals, not scheduled work.
-Updated: October 25, 2026.
+Updated: October 30, 2026.
+
+## Latest decision, October 30
+
+The [bounded memory-context milestone](experiments/2026-10-30-memory-milestone.md)
+is closed without adoption. Three return-conversation answers completed; the recap
+timed out and the second repeat lost inference connectivity. Remaining inference
+controls were not started. The candidate is now opt-in diagnostic code only;
+production context behavior is unchanged. No further memory tuning, synthesis,
+ingestion or model comparison is scheduled. Broader proposals below remain a
+backlog, not acceptance requirements for this completed experiment.
+
+The browser's Python service was stopped at inspection, and Mac inference became
+unreachable during the isolated run. Availability recovery is separate from memory
+quality and was not investigated here. The operating results below are historical.
 
 The goal is a capable personal agent with natural conversation, useful recall and
 reliable tools. These work streams connect everyday use, evaluation and targeted
 experiments. Detailed findings belong in experiment records; implementation
 limitations belong in the [technical backlog](technical-debt.md).
 
-## Current state, October 25
+## Recorded state, October 26
 
 The supported browser -> HP Python service -> Mac llama.cpp path is running
-Qwen3.8-27B Q4_K_M with low thinking, a 16,384-token context and a 2,048-token
-output allowance. Model identity is verified separately from service health.
+**Qwen3.5-122B-A10B UD-IQ3_S**, selected by the owner for now, with a
+16,384-token context and a 2,048-token output allowance. Model identity is verified separately from service health.
 Machine addresses, startup details and backups remain in the ignored local runbook.
 
 The reported browser failures are repaired: strict-template finalization, context
@@ -23,12 +37,15 @@ typecheck. Rendered component and hook tests cover the display and refresh
 behavior; automated pixel screenshot comparison is not implemented. See the
 [recovery record](experiments/2026-10-24-browser-inference-recovery.md).
 
-The model comparison and thinking-disabled experiment are complete. Disabling
-thinking reduced broader-suite median latency from 20.027 to 11.642 seconds,
-but full-case rubric passes fell from 25/30 to 24/30 and thinking-marker leaks
-increased from one answer to four. Keep thinking low. These exploratory results
-do not establish general reliability; see the
-[thinking-control record](experiments/2026-10-24-qwen-thinking-control.md).
+The local model-selection work is **closed for now**, following the owner's
+October 26 decision to settle on Qwen122. The matched three-repeat comparison
+scored 77/90 for Qwen122, 75/90 for 27B and 65/90 for Coder-Next; median turn
+times were 8.162, 15.439 and 2.489 seconds respectively. The small quality lead
+is inconclusive, and known retrieval/source failures remain. Keep the current
+model and configuration; further downloads, precision/thinking sweeps and model
+comparisons are deferred until a concrete need justifies reopening the work.
+Coding-client performance remains untested, not an outstanding task in this
+closed selection round. See the [decision and comparison record](experiments/2026-10-26-qwen122-comparison.md).
 
 The reviewed memory expansion is live: 69 sources and 27 articles, retaining the
 previous 33 sources and nine articles. A seeded sample across mailbox/year strata
@@ -39,7 +56,7 @@ curation from a bounded sample, not autonomous or full-archive ingestion.
 Subsequent user feedback confirms richer recall, but the live overview mixed major
 life areas with incidental episodes and added unsupported inferences. Its sole
 recorded call read the flat inventory, not the supporting articles or journal
-contents. The immediate agreed next experiment is thematic synthesis and
+contents. The agreed experiment at that time was thematic synthesis and
 question-appropriate prioritization over the existing memory before another
 volume increase. No synthesis or importance-ranking change has been implemented.
 An [offline overview comparison](experiments/2026-10-24-memory-overview.md) now
@@ -89,11 +106,12 @@ improved recall and corrections, but was slower and exhausted the tool budget in
 six runs. These synthetic results show sensitivity to the model/provider setup;
 they do not isolate weight count, quantization, training or context capacity.
 
-Next: use the stronger model as a reference when diagnosing failures, compare
-practical model/configuration alternatives, and measure actual usage cost alongside
-quality and latency. Success on one model and failure on another is evidence to
-investigate, not proof that the harness is correct or that the model alone is at
-fault. Change one relevant factor at a time and preserve repeated baselines.
+Selection outcome, October 26: **Qwen3.5-122B-A10B UD-IQ3_S is the chosen
+local model for now; this comparison round is closed.** Historical models remain
+reference results. Additional model/configuration and cost comparisons are
+optional future investigations, not active follow-up work. Reopen only when
+actual usage or a specific coding-client requirement warrants it. Preserve
+repeated baselines and distinguish model behavior from harness failures.
 
 For the current owner, local inference is attractive primarily for avoiding
 per-token charges and retaining control, provided capability is sufficient.
@@ -143,6 +161,18 @@ response speed and interaction friction. It is not replaced by an automated scor
 
 ## 5. Longer-term memory development
 
+October 26 continuation: [dependable personal memory](personal-memory-development.md)
+began. The [current-model diagnostic record](experiments/2026-10-26-personal-memory.md)
+separates discovery, article omissions, source interpretation and broad overview
+selection. Detailed baseline review is complete; bounded context trials remain
+isolated until their results justify adoption. This does not reopen model selection.
+October 28: paragraph enrichment was rejected for chronology regressions. After
+an interruption and an engine template/context change, [fresh interleaved
+controls](experiments/2026-10-28-personal-memory.md) test explicit source coverage,
+returning after a pause with a newer user report, corrections, and withholding
+uninspected index entries. No production context change was adopted; the round is
+now closed as described above.
+
 Implemented foundation: durable conversation history and refreshed daily journals.
 A small reviewed article pilot is live as of October 23, 2026. Consolidation,
 incremental article updates and a larger-corpus index remain proposals.
@@ -170,7 +200,7 @@ useful retrieval over reviewed knowledge, not independent automatic reconstructi
 User feedback reports a richer three-year summary, while controlled/live checks
 still show car-versus-ski-rental confusion, mixed years and current-status claims.
 
-Next: compare evidence-backed thematic overviews with the flat-index baseline.
+Deferred proposals: compare evidence-backed thematic overviews with the flat-index baseline.
 Investigate lasting relevance, recurrence, explicit user emphasis and consequences
 as candidate significance signals, without imposing a fixed taxonomy or assuming
 frequent events are always important. Test broad summaries, detailed questions
@@ -197,9 +227,9 @@ Record improvements, regressions and inconclusive outcomes before deciding what
 to keep. A change without a score gain can still be justified by a demonstrated
 benefit such as maintainability; record that reason explicitly.
 
-The immediate agreed memory experiment is synthesis and prioritization over the
-expanded bundle. Independent validation, faithful source use and remaining search
-stopping/recovery failures remain part of that work.
+The earlier synthesis and prioritization experiments are recorded below. The
+October 30 decision above supersedes their open-ended continuation. Independent
+validation and remaining source-binding failures remain deferred limitations.
 The [memory-faithfulness comparison](experiments/2026-10-23-memory-faithfulness.md)
 now separates evidence availability from answering. A bounded source-context
 candidate and a reconciliation prompt were rejected. Complete evidence still

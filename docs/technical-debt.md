@@ -4,6 +4,11 @@ Reviewed: October 25, 2026. Current evaluation baseline:
 [conversation suite](experiments/conversation-evaluations.md). Prioritize repeated
 conversation evidence before choosing retrieval, model or prompt changes.
 
+October 30 closeout: the [bounded memory-context experiment](experiments/2026-10-30-memory-milestone.md)
+did not pass its execution gate. Runtime activation was withdrawn; timestamps and
+question-directed source paragraphs remain opt-in diagnostic code only. The
+proposals below are a backlog, not unfinished acceptance work for that experiment.
+
 The supported path is browser -> Python agent service -> Mac llama.cpp (or Ollama). The retired Node
 proxy and browser-owned orchestration have been removed. Model hardware and agent
 state remain independently deployable.

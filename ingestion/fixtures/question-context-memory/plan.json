@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "articles": [
+    {
+      "slug": "bicycle-maintenance",
+      "type": "concept",
+      "title": "Bicycle maintenance",
+      "description": "Documented service items.",
+      "claims": [
+        {
+          "type": "source_statement",
+          "text": "The receipt lists replacement brake pads and a chain adjustment.",
+          "evidence": [
+            {
+              "record_id": "bicycle-repair",
+              "quote": "The receipt lists replacement brake pads and a chain adjustment."
+            }
+          ]
+        }
+      ],
+      "unknowns": [
+        "The next service interval is not established."
+      ],
+      "links": []
+    }
+  ]
+}
