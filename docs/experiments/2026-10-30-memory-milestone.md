@@ -6,8 +6,7 @@ Status: Closed; candidate not adopted. Dependable memory remains unproven.
 ## Goal and stop rule
 
 Resolve the interrupted timestamp/source-excerpt candidate with a finite decision.
-The [completion contract](../personal-memory-development.md#october-30-completion-contract)
-requires two four-turn return/update/correction conversations, existing nearby
+The completion contract requires two four-turn return/update/correction conversations, existing nearby
 controls, and passing engineering checks before runtime adoption. A failed gate
 withdraws activation and ends this round; it does not trigger another intervention.
 No models, prompts, source records or published memory were changed.

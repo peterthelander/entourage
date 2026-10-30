@@ -57,7 +57,7 @@ stage. Stream records and retain only the intermediate outputs an experiment nee
 
 The guiding outcome is an agent that can review prior Chapin daddy-daughter ski
 trips from ingested sources and help plan the upcoming trip. See the
-[use case and success criteria](../docs/personal-context-roadmap.md#guiding-use-case-planning-the-chapin-daddy-daughter-ski-trip).
+[use case and success criteria](../docs/personal-context-roadmap.md#intended-experience).
 Measure filtering and extraction against useful, source-backed recall as well as
 size reduction.
 

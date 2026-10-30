@@ -15,7 +15,8 @@ from .web_search import SEARCH_TOOL, search_web
 from .web_pages import PAGE_TOOL, read_web_page
 from .inference_errors import InferenceError
 
-SYSTEM_PROMPT = (
+# Shared behavior lives here; memory instructions are selected explicitly below.
+BASE_PROMPT = (
     "You are Entourage, a helpful personal assistant. Answer the latest question clearly and concisely, "
     "using conversation history when relevant. Keep answers conversational and proportional to the request; "
     "start with the useful answer and omit unnecessary detail. Prefer short paragraphs or lists, especially "
@@ -40,6 +41,9 @@ SYSTEM_PROMPT = (
     "Summarize only relevant facts established by the returned findings, linking claims to the supplied source URLs. "
     "Keep unresolved identity or missing details unresolved; search time alone does not make a fact current. "
     "Never claim to have opened pages or searched when no successful tool result supports it. "
+)
+
+CONVERSATION_MEMORY_PROMPT = (
     "For earlier personal conversations not in recent history, use searchMemories with short literal keywords. "
     "Cite source timestamps and message IDs for recalled facts. Search user messages first. "
     "Assistant recollections are only leads: read the original cited message with readMemories(message_id=...) "
@@ -51,6 +55,9 @@ SYSTEM_PROMPT = (
     "For yesterday or other relative dates, getCurrentTime first; never guess today's date. "
     "Follow pagination within the tool budget and clearly label summaries of only some entries as partial."
 )
+# Keep the default prompt available to standalone evaluation runners.
+SYSTEM_PROMPT = BASE_PROMPT + CONVERSATION_MEMORY_PROMPT
+
 OPERATIONS = ["add", "subtract", "multiply", "divide", "power", "percentage"]
 TOOLS = [{"type": "function", "function": {
     "name": "calculate", "description": "Calculate arithmetic with finite numbers a and b. Chain calls for multi-step calculations. Uses floating-point numbers.",
@@ -158,8 +165,7 @@ def build_context(prompt, history, settings=None, *, created_at=None):
         remaining -= len(message["text"])
     while recent and recent[0]["role"] != "user":
         recent.pop(0)
-    system = (SYSTEM_PROMPT.split("For earlier personal conversations", 1)[0] + KNOWLEDGE_PROMPT
-              if settings.knowledge_enabled else SYSTEM_PROMPT)
+    system = BASE_PROMPT + (KNOWLEDGE_PROMPT if settings.knowledge_enabled else CONVERSATION_MEMORY_PROMPT)
     return [{"role": "system", "content": system}, *recent, {"role": "user", "content": prompt.strip()}]
 
 

@@ -1,17 +1,13 @@
 # Remaining technical work
 
-Reviewed: October 25, 2026. Current evaluation baseline:
-[conversation suite](experiments/conversation-evaluations.md). Prioritize repeated
-conversation evidence before choosing retrieval, model or prompt changes.
+Status: Engineering backlog; items are not scheduled commitments.
+Reviewed: October 30, 2026.
 
-October 30 closeout: the [bounded memory-context experiment](experiments/2026-10-30-memory-milestone.md)
-did not pass its execution gate. Runtime activation was withdrawn; timestamps and
-question-directed source paragraphs remain opt-in diagnostic code only. The
-proposals below are a backlog, not unfinished acceptance work for that experiment.
+Follow [current priorities](ongoing-work-streams.md) when selecting work. Operational
+behavior belongs in [service operations](../server/EXECUTION.md); dated results
+belong in the [experiment index](experiments/README.md).
 
-The supported path is browser -> Python agent service -> Mac llama.cpp (or Ollama). The retired Node
-proxy and browser-owned orchestration have been removed. Model hardware and agent
-state remain independently deployable.
+## Execution and client limits
 
 - Browser/device tool execution currently assumes one active tab per device. Only
   read-only device capabilities, calculator, journal/reviewed-import retrieval,
@@ -26,9 +22,6 @@ state remain independently deployable.
   ordering and direct source-message reads; semantic recall and automatic correction
   resolution remain future work. Conversation results expose numeric source IDs;
   imported records use string IDs and snapshot-bound reads.
-  Citations, source dates and unsupported combinations still fail in live model
-  evaluations despite successful retrieval. See the
-  [source-identifier experiment](experiments/2026-10-21-source-identifiers.md).
 - Inventory and date reading support coverage questions and topic summaries.
   Long ranges need pagination; the four-call budget limits a single-turn overview.
   Persisted summaries and a larger-corpus index remain future work.
@@ -55,85 +48,30 @@ state remain independently deployable.
 - The existing one-screen entry point is App.tsx. Introduce Expo Router as required
   when navigation is added; keep shared components outside route directories.
 
-## Reviewed memory and evaluation gaps
+## Memory and evaluation gaps
 
-- The [October 24 browser diagnosis](experiments/2026-10-24-browser-inference-recovery.md)
-  reproduced Qwen finalization failure from a late system message and a separate
-  real context overflow. Finalization now uses the initial system message; large
-  llama.cpp transcripts have actual-token preflight and bounded answer-only
-  recovery. Configured versus loaded model status and safe error causes are
-  visible in the UI, with refresh/render regressions. Approximate initial history
-  selection and oversized evidence remain limits; successful execution does not
-  establish semantic answer correctness.
-- The [Qwen follow-up](experiments/2026-10-24-qwen-transfer-and-conversations.md)
-  improves source-binding controls (15/16 passing) and the broader first-pass
-  rubric score (25/30 versus historical gpt-oss 21/30), with materially slower
-  observed responses. It still misses unresolved venue alternatives and required
-  source links, omits part of a requested plan recap, and leaks a literal thinking
-  marker with duplicated text in one answer. The original failed experiment
-  remains preserved; the later live reproduction established and repaired a
-  strict-template finalization defect. Known context/output limits, template
-  failures, connection errors, timeouts and interrupted streams now have separate
-  safe messages, including measured context counts when available. The
-  [thinking-disabled comparison](experiments/2026-10-24-qwen-thinking-control.md)
-  reduced latency but scored 24/30 with more presentation leaks; thinking remains
-  low. Repeated evaluation and independent review remain work. The live deployment
-  now uses Qwen, without claiming that one pass establishes general reliability.
-- The [evidence-versus-answering comparison](experiments/2026-10-23-memory-faithfulness.md)
-  still finds local chronology, estimate/settlement and object-identity errors
-  with complete source evidence. Reconciliation-prompt and bounded-source-context
-  trials did not justify production adoption; the broader context comparison was
-  13 passing/8 failing/3 unclear turns versus 14/8/2 in its matched control.
-  Empty model replies now fail execution explicitly instead of becoming completed
-  placeholder answers. Semantic answer failures remain distinct.
-- The live 69-source/27-article pilot is hand-curated. The original 33-source/
-  nine-article bundle used private topic selectors, user hints and reviewed
-  observations; the October 24 expansion used seeded mailbox/year sampling.
-  Coding-agent review still supplied article synthesis and acceptance;
-  reliable automatic extraction, synthesis and incremental publication are not
-  established. Larger-corpus indexing, resumable ingestion, attachment processing
-  and real bank/card adapters remain unimplemented.
-- Broad memory summaries currently have no demonstrated significance-selection
-  mechanism. A subsequent live answer summarized the flat article inventory,
-  mixing durable life themes with incidental episodes, claiming conversation
-  grounding without recorded message reads and overstating dated evidence.
-  The agreed next experiment is evidence-backed synthesis and question-appropriate
-  prioritization over existing memory, preserving targeted detail retrieval.
-  No importance score, synthesis layer or automatic consolidation has been
-  implemented. See the [expansion and live-feedback record](experiments/2026-10-24-broader-memory-sample.md#subsequent-live-feedback-breadth-versus-significance).
-  An [offline overview experiment](experiments/2026-10-24-memory-overview.md) now
-  compares inventory-only, full selected evidence and editorial thematic grouping.
-  Its first full-evidence attempt exceeded the actual model context; normalized
-  packets and a smaller selection preserve complete selected articles. This is
-  experimental infrastructure, not production retrieval or automatic significance.
-  The completed comparison retained source-binding errors with inspected evidence
-  and 180-second follow-up timeouts. The thematic candidate was not adopted;
-  fictional unnamed-participant and unread-attachment controls now preserve these
-  failures as development material.
-- The running code is generic, but the recurring-event cases informed development
-  and cannot serve as untouched validation. Freeze code/settings and use fresh
-  real topics with independently prepared expected findings; evaluate ingestion
-  stages separately from retrieval/answering. See the
-  [memory evaluation protocol](experiments/conversation-evaluations.md#memory-experiments-and-holdout-separation).
-- Local answers still mix source/activity years, confuse car and ski-equipment
-  rentals, and turn dated reservations into current-status claims. Better article
-  structure and retrieval help some cases but have not established reliable
-  multi-turn source binding. Preserve failed traces and use controlled comparisons
-  before choosing further model, context or retrieval changes.
-- The [fresh-topic study](experiments/2026-10-23-fresh-memory-validation.md)
-  additionally shows correct tables followed by reversed chronology, unsupported
-  timezone conversions and overstated archive coverage. Expanded source excerpts
-  improve payment qualifications on a small local comparison, but do not fix
-  chronology. Article generation can omit source exceptions despite valid literal
-  citations; automatic acceptance remains unjustified. Fictional source-binding
-  regression inputs and explicit freeze/review tooling now exist.
-- The four executed-call budget now has an answer-only finalization pass. A hosted
-  reference still requested tools after finalization disabled them and failed;
-  this recovery path does not guarantee completion. Execution success and semantic
-  correctness must remain separate findings. See the
-  [recurring-event record](experiments/2026-10-23-recurring-event-reconstruction.md).
+- Answers can confuse source identity, record dates, activity dates and correction
+  order even with complete evidence. Plans and reservations can become unsupported
+  completion or current-status claims. Evaluate whole conversations and nearby
+  positive cases before adopting retrieval or prompt changes.
+- Broad summaries have no demonstrated significance-selection mechanism. Index
+  entries are discovery leads, not inspected evidence. Automatic synthesis,
+  importance ranking and consolidation remain deferred proposals.
+- The reviewed import pilot is manually curated. Reliable automatic extraction,
+  synthesis and incremental publication are unproven. Resumable ingestion,
+  larger-corpus indexing, attachments and additional source adapters are absent.
+  See [ingestion boundaries](memory-ingestion.md).
+- Existing memory cases informed development. Untouched real topics with
+  independently prepared expectations are needed before claiming generalization.
+  Mechanical scoring and unblinded coding-agent review are incomplete measures;
+  see the [evaluation protocol](experiments/conversation-evaluations.md#memory-experiments-and-holdout-separation).
+- Initial history selection uses an approximate character budget. llama.cpp has
+  actual-token preflight and bounded answer-only recovery, but oversized evidence
+  and provider behavior can still prevent completion. The four-call tool budget
+  can constrain useful retrieval; disabling tools for finalization does not
+  guarantee that every provider will finish successfully.
 
-Run the checks documented in README.md. Python tests exercise temporary databases
-and simulated inference; hook and rendered-component tests cover refresh, model
-identity, errors and retry controls. Automated pixel screenshot comparison is
-not implemented. scripts/check-agent.py checks real authenticated inference.
+Run the checks in the [project README](../README.md). Python regressions use
+simulated inference and temporary stores; client tests cover refresh, rendering
+and retry behavior. Automated pixel comparison is absent. `scripts/check-agent.py`
+checks real authenticated inference separately from these regressions.
