@@ -4,6 +4,36 @@ A personal agent with a phone/desktop browser interface, a Python agent service,
 and local inference through Ollama or llama.cpp. The browser handles display, input and device permissions;
 Python owns conversations, durable turns, model requests and the tool loop.
 
+**Status:** active research prototype. The browser client and Python service are the
+current path; native on-device inference is retained for future work.
+
+## What this explores
+
+A personal agent should keep a continuous conversation across devices while making
+history, tool use, and recovery understandable. Entourage separates a responsive
+React/TypeScript interface from the service that owns execution and durable state.
+
+```mermaid
+flowchart LR
+    Browser["Browser · React / TypeScript"] <--> Service["Python agent service"]
+    Service <--> History["SQLite history and turn state"]
+    Service <--> Model["Local or configured remote inference"]
+    Service <--> Tools["Tools and memory retrieval"]
+```
+
+Engineering threads include [context and memory experiments](docs/experiments/README.md),
+[clear ownership and design decisions](docs/design-principles.md), and
+[execution and recovery behavior](server/EXECUTION.md). Model quality, device behavior,
+and inference performance depend on configuration; passing unit tests alone does
+not verify the complete experience.
+
+## Start here
+
+You need Node.js/npm, Python 3.11+, and a configured inference provider for actual
+agent replies. See the local setup below and the linked Python guide. Inference
+may need substantial local resources or a paid provider. Do not publish personal
+history or expose the service as an unauthenticated public demo.
+
 See [design principles](docs/design-principles.md) for how we investigate problems and
 keep changes simple and coherent. Browse the [documentation index](docs/README.md)
 for current references, proposals, experiments, and historical records.
